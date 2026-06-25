@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pgKata — PostgreSQL Challenges</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/monokai.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/hint/show-hint.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-header">
+    <h1>pgKata</h1>
+    <div class="progress-bar-container">
+        <span id="progress-label">loading...</span>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+    </div>
+    <div id="db-status" class="db-status db-loading">starting PG…</div>
+</div>
+
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">Challenges</div>
+        <div id="challenge-list"></div>
+    </aside>
+
+    <main class="main-panel">
+        <div class="editor-section" id="editor-section">
+            <div class="editor-header">
+                <span id="file-label">Select a challenge from the sidebar</span>
+                <div class="editor-actions">
+                    <button class="btn btn-primary" id="run-btn" disabled onclick="window.runSQL()">Run</button>
+                    <button class="btn btn-verify" id="verify-btn" disabled onclick="window.verifySQL()">Verify</button>
+                    <button class="btn btn-hint" id="hint-btn" disabled onclick="window.showHint()">Hint</button>
+                    <button class="btn btn-beautify" id="beautify-btn" onclick="window.beautifySQL()">Beautify</button>
+                    <button class="btn" id="restore-btn" onclick="window.showRestore()">Restore</button>
+                    <button class="btn btn-danger" id="reset-btn" onclick="window.resetDB()">Reset DB</button>
+                </div>
+            </div>
+            <div class="editor-wrapper">
+                <div id="challenge-desc" class="challenge-description" style="display:none"></div>
+                <div id="empty-state" class="empty-state">Select a challenge to begin</div>
+                <textarea id="editor" style="display:none"></textarea>
+                <div class="editor-footer">
+                    <div class="indent-selector" id="indent-selector">
+                        <span class="indent-option" data-indent="2" onclick="window.setIndentUnit(2)">2</span>
+                        <span class="indent-option active" data-indent="4" onclick="window.setIndentUnit(4)">4</span>
+                        <span class="indent-option" data-indent="8" onclick="window.setIndentUnit(8)">8</span>
+                        <span class="indent-divider">|</span>
+                        <span class="indent-option" data-mode="spaces" onclick="window.setIndentMode('spaces')">Spaces</span>
+                        <span class="indent-option" data-mode="tabs" onclick="window.setIndentMode('tabs')">Tab</span>
+                    </div>
+                    <span id="save-indicator" class="save-indicator"></span>
+                </div>
+            </div>
+        </div>
+        <div class="split-handle" id="split-handle"></div>
+        <div class="results-section" id="results-section">
+            <div class="results-header">
+                <span>Results</span>
+                <span id="results-time"></span>
+            </div>
+            <div class="psql-bar">
+                <span class="psql-prompt">=#</span>
+                <input type="text" class="psql-input" id="psql-input" placeholder="Type a command..." list="psql-commands" autocomplete="off" onkeydown="if(event.key==='Enter')window.runPsql()" />
+                <datalist id="psql-commands">
+                    <option value="\dt">
+                    <option value="\d">
+                    <option value="\d+">
+                    <option value="\di">
+                    <option value="\dv">
+                    <option value="\df">
+                    <option value="\du">
+                    <option value="\l">
+                    <option value="\dn">
+                    <option value="\x">
+                    <option value="\conninfo">
+                    <option value="\?">
+                </datalist>
+                <button class="btn psql-btn" onclick="window.runPsql()">Run</button>
+            </div>
+            <div id="verify-result" style="display:none"></div>
+            <div id="hint-content" class="hint-container" style="display:none"></div>
+            <div class="results-content" id="results-content"></div>
+        </div>
+    </main>
+</div>
+
+<div id="restore-overlay" class="overlay" style="display:none">
+    <div class="overlay-content">
+        <div class="overlay-header">
+            <span>Restore to checkpoint</span>
+            <span class="overlay-close" onclick="window.hideRestore()">&times;</span>
+        </div>
+        <div class="overlay-body">
+            <p class="overlay-desc">Reset the database and run all challenges up to the selected checkpoint.</p>
+            <div id="checkpoint-list"></div>
+        </div>
+        <div class="overlay-footer">
+            <button class="btn" onclick="window.hideRestore()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="restore-progress-overlay" class="overlay" style="display:none">
+    <div class="overlay-content">
+        <div class="overlay-header">
+            <span>Restoring...</span>
+        </div>
+        <div class="overlay-body" id="restore-progress-body">
+            <div class="restore-progress-item" id="restore-status-reset">
+                <span class="restore-spinner"></span>
+                <span>Resetting database...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/hint/show-hint.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/hint/sql-hint.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/closebrackets.js"></script>
+
+<script type="module">
+import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite/dist/index.js'
+
+const TIERS = [
+    {id: "01_foundations", label: "01: SQL Foundations", dirs: ["00_create_table", "01_select_where", "02_order_limit", "03_string_functions", "04_date_functions", "05_aggregate_basics", "06_group_by_having", "07_union_set", "08_insert_records", "09_alter_table", "10_delete_records", "11_phone_formatting"]},
+    {id: "02_joins", label: "02: Joins & Relationships", dirs: ["01_inner_join", "02_left_right_join", "03_self_join", "04_multi_join", "05_anti_join"]},
+    {id: "03_aggregation", label: "03: Aggregation", dirs: ["00_duplicates", "01_group_basics", "02_having", "03_rollup_cube", "04_filtered_agg", "05_case_aggregation"]},
+    {id: "04_subqueries", label: "04: Subqueries & CTEs", dirs: ["00_address_cte", "01_scalar_subquery", "02_derived_table", "03_exists_in", "04_cte", "05_correlated"]},
+    {id: "05_window", label: "05: Window Functions", dirs: ["01_row_number", "02_rank_dense", "03_ntile", "04_lag_lead", "05_first_last_value", "06_frames"]},
+    {id: "06_specialties", label: "06: PostgreSQL Specialties", dirs: ["00_create_user", "01_jsonb", "02_arrays", "03_fulltext", "04_enums", "05_type_casting", "06_password_encryption"]},
+    {id: "07_plpgsql", label: "07: PL/pgSQL", dirs: ["01_basic_function", "02_param_function", "03_set_returning", "04_stored_procedure", "05_trigger"]},
+    {id: "08_expert", label: "08: Expert PostgreSQL", dirs: ["01_recursive_cte", "02_isolation_levels", "03_for_update", "04_explain_analyze", "05_partial_index", "06_row_level_security"]},
+    {id: "09_leetcode", label: "09: LeetCode Practice", dirs: ["01_department_top3", "02_consecutive", "03_stadium", "04_median", "05_tree_traversal"]},
+]
+
+let pg
+let editor = null
+let currentFolder = null
+let challengeMeta = {}
+let hintLevel = 0
+let autosaveTimer = null
+let splitDragging = false
+let psqlExpanded = false
+
+const PROGRESS_KEY = 'pgkata_progress'
+
+function $(id) { return document.getElementById(id) }
+
+// ── PGlite ──────────────────────────────────────────
+
+async function ensureDB() {
+    if (pg) return pg
+    pg = new PGlite('idb://pgkata')
+    return pg
+}
+
+function rowsToTable(result) {
+    if (!result || !result.rows) return { columns: [], rows: [], row_count: 0 }
+    if (result.rows.length === 0) {
+        const keys = Object.keys(result.fields || {})
+        return { columns: keys, rows: [], row_count: 0 }
+    }
+    const columns = Object.keys(result.rows[0])
+    const rows = result.rows.map(row => columns.map(c => String(row[c] ?? '')))
+    return { columns, rows, row_count: rows.length }
+}
+
+async function pgExec(sql) {
+    const db = await ensureDB()
+    try {
+        const raw = await db.exec(sql)
+        return raw.map(r => {
+            if (r.rows) {
+                const tbl = rowsToTable(r)
+                return { type: 'select', columns: tbl.columns, rows: tbl.rows, row_count: tbl.row_count }
+            }
+            return { type: 'execute', rows_affected: r.affectedRows ?? null }
+        })
+    } catch (e) {
+        return [{ type: 'error', error: e.message }]
+    }
+}
+
+async function pgQuery(sql) {
+    const db = await ensureDB()
+    return db.query(sql)
+}
+
+// ── DB status ───────────────────────────────────────
+
+async function initDB() {
+    const status = $('db-status')
+    status.textContent = 'starting PG…'
+    status.className = 'db-status db-loading'
+    try {
+        const start = performance.now()
+        await ensureDB()
+        await pg.exec('SELECT 1')
+        const elapsed = ((performance.now() - start) / 1000).toFixed(1)
+        status.textContent = `PG ready (${elapsed}s)`
+        status.className = 'db-status db-ready'
+    } catch (e) {
+        status.textContent = 'PG failed to start'
+        status.className = 'db-status db-error'
+    }
+}
+initDB()
+
+// ── Split pane ──────────────────────────────────────
+
+function initSplitPane() {
+    const handle = $('split-handle')
+    const results = $('results-section')
+    const panel = document.querySelector('.main-panel')
+
+    function loadSplit() {
+        try { return parseFloat(localStorage.getItem('sql_split_pct')) || 0.35 } catch(e) { return 0.35 }
+    }
+    function applySplit(pct) {
+        const panelH = panel.clientHeight, handleH = handle.clientHeight
+        const resultsH = Math.max(60, Math.round(panelH * pct))
+        const editorH = panelH - resultsH - handleH
+        const es = document.querySelector('.editor-section')
+        if (es) { es.style.flex = 'none'; es.style.height = Math.max(50, editorH) + 'px' }
+        results.style.height = resultsH + 'px'; results.style.flex = 'none'
+    }
+    function onDown(e) { splitDragging = true; handle.classList.add('active'); e.preventDefault() }
+    function onMove(e) {
+        if (!splitDragging) return
+        const rect = panel.getBoundingClientRect()
+        const y = (e.clientY || e.touches[0].clientY) - rect.top
+        const pct = Math.max(0.08, Math.min(0.7, (rect.height - y) / rect.height))
+        applySplit(pct)
+        try { localStorage.setItem('sql_split_pct', pct) } catch(e) {}
+    }
+    function onUp() { if (!splitDragging) return; splitDragging = false; handle.classList.remove('active') }
+    handle.addEventListener('mousedown', onDown)
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+    handle.addEventListener('touchstart', onDown)
+    document.addEventListener('touchmove', onMove)
+    document.addEventListener('touchend', onUp)
+    setTimeout(() => applySplit(loadSplit()), 50)
+    window.addEventListener('resize', () => applySplit(loadSplit()))
+}
+initSplitPane()
+
+// ── Indent prefs ────────────────────────────────────
+
+function loadIndentPref() {
+    try { return JSON.parse(localStorage.getItem('sql_indent_pref')) || { size: 4, mode: 'spaces' } }
+    catch(e) { return { size: 4, mode: 'spaces' } }
+}
+function saveIndentPref(pref) {
+    try { localStorage.setItem('sql_indent_pref', JSON.stringify(pref)) } catch(e) {}
+}
+function updateIndentSelector(pref) {
+    document.querySelectorAll('.indent-option').forEach(el => el.classList.remove('active'))
+    const s = document.querySelector(`.indent-option[data-indent="${pref.size}"]`)
+    if (s) s.classList.add('active')
+    const m = document.querySelector(`.indent-option[data-mode="${pref.mode}"]`)
+    if (m) m.classList.add('active')
+}
+
+window.setIndentUnit = function(size) {
+    if (!editor) return
+    const pref = loadIndentPref()
+    pref.size = parseInt(size)
+    pref.mode = editor.getOption('indentWithTabs') ? 'tabs' : 'spaces'
+    saveIndentPref(pref)
+    editor.setOption('indentUnit', pref.size)
+    if (!editor.getOption('indentWithTabs')) editor.setOption('tabSize', pref.size)
+    updateIndentSelector(pref)
+}
+
+window.setIndentMode = function(mode) {
+    if (!editor) return
+    const pref = loadIndentPref()
+    pref.mode = mode
+    if (mode === 'tabs') {
+        editor.setOption('indentWithTabs', true)
+        editor.setOption('indentUnit', pref.size)
+        editor.setOption('tabSize', pref.size)
+    } else {
+        editor.setOption('indentWithTabs', false)
+        editor.setOption('indentUnit', pref.size)
+        editor.setOption('tabSize', pref.size)
+    }
+    saveIndentPref(pref)
+    updateIndentSelector(pref)
+}
+
+// ── Editor save / restore ───────────────────────────
+
+function showSaveIndicator(type) {
+    const el = $('save-indicator')
+    if (!el) return
+    el.className = 'save-indicator ' + (type === 'manual' ? 'save-manual' : 'save-auto')
+    el.textContent = type === 'manual' ? 'Saved' : 'Auto-saved'
+    el.style.opacity = '1'
+    setTimeout(() => { el.style.opacity = '0' }, 2000)
+}
+
+function saveEditorContent() {
+    if (!editor || !currentFolder) return
+    try { localStorage.setItem('sql_editor_' + currentFolder, editor.getValue()) } catch(e) {}
+}
+function loadEditorContent(folder) {
+    try { return localStorage.getItem('sql_editor_' + folder) } catch(e) { return null }
+}
+function startAutosave() {
+    stopAutosave()
+    autosaveTimer = setInterval(() => { saveEditorContent(); showSaveIndicator('auto') }, 30000)
+}
+function stopAutosave() {
+    if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null }
+}
+
+// ── Challenge loading ───────────────────────────────
+
+async function loadChallenges() {
+    try {
+        const r = await fetch('challenges/index.json')
+        challengeMeta = await r.json()
+    } catch(e) {
+        challengeMeta = {}
+    }
+    const progress = loadProgress()
+    const all = buildChallengeList()
+    const completed = Object.keys(progress).length
+    renderSidebar(all, progress, completed, all.length, TIERS)
+}
+
+function buildChallengeList() {
+    const list = []
+    for (const tier of TIERS) {
+        for (const dir of tier.dirs) {
+            const id = tier.id + '/' + dir
+            const meta = challengeMeta[id] || {}
+            list.push({ id, title: meta.title || dir, difficulty: meta.difficulty || 'medium', description: meta.description || '', hints: meta.hints || [] })
+        }
+    }
+    return list
+}
+
+function renderSidebar(challenges, progress, completed, total, tiers) {
+    const list = $('challenge-list')
+    list.innerHTML = ''
+    tiers.forEach(tier => {
+        const ids = tier.dirs.map(d => tier.id + '/' + d)
+        const done = ids.filter(id => progress[id]).length
+        const seg = document.createElement('div')
+        seg.className = 'tier-section'
+        seg.innerHTML = `<div class="tier-header"><span class="tier-label">${tier.label}</span><span class="tier-count">${done}/${tier.dirs.length}</span></div>`
+        const inner = document.createElement('div')
+        inner.className = 'tier-challenges'
+        tier.dirs.forEach(dir => {
+            const fullId = tier.id + '/' + dir
+            const c = challenges.find(x => x.id === fullId)
+            if (!c) return
+            const d = progress[c.id] === true
+            const diff = c.difficulty || 'medium'
+            const colors = {easy: '#a6e22e', medium: '#e6db74', hard: '#ff297b', expert: '#66d9ef'}
+            const color = colors[diff] || '#9a957c'
+            const div = document.createElement('div')
+            div.className = 'challenge-item' + (d ? ' completed' : '')
+            div.dataset.folder = c.id
+            div.onclick = () => selectChallenge(c.id)
+            div.innerHTML = `
+                <span class="challenge-status">${d ? '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#a6e22e" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#a6e22e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#3e3d32" stroke-width="1.5"/></svg>'}</span>
+                <span class="challenge-diff"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="${color}"/></svg></span>
+                <span class="challenge-title">${c.title}</span>
+            `
+            inner.appendChild(div)
+        })
+        seg.appendChild(inner)
+        list.appendChild(seg)
+    })
+    updateProgress(completed, total)
+}
+
+function updateProgress(completed, total) {
+    const pct = total ? Math.round(completed / total * 100) : 0
+    $('progress-label').textContent = `${completed} / ${total}`
+    $('progress-fill').style.width = pct + '%'
+}
+
+// ── Progress ────────────────────────────────────────
+
+function loadProgress() {
+    try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}') } catch(e) { return {} }
+}
+function saveProgress(data) {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(data)) } catch(e) {}
+}
+async function markComplete(folder) {
+    const data = loadProgress()
+    data[folder] = true
+    saveProgress(data)
+    loadChallenges()
+}
+
+// ── Select challenge ────────────────────────────────
+
+function selectChallenge(folder) {
+    saveEditorContent()
+    stopAutosave()
+    document.querySelectorAll('.challenge-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.folder === folder)
+    })
+    currentFolder = folder
+    $('run-btn').disabled = false
+    $('verify-btn').disabled = false
+    $('hint-btn').disabled = false
+    hintLevel = 0
+    $('hint-content').style.display = 'none'
+    loadFolder(folder)
+}
+
+function loadFolder(folder) {
+    const meta = challengeMeta[folder] || {}
+    const label = folder
+    $('file-label').textContent = label
+    const desc = meta.description || ''
+    $('challenge-desc').textContent = desc
+    $('challenge-desc').style.display = desc ? 'block' : 'none'
+    $('empty-state').style.display = 'none'
+    const ta = $('editor')
+    if (!editor) {
+        ta.style.display = 'none'
+        const savedIndent = loadIndentPref()
+        editor = CodeMirror.fromTextArea(ta, {
+            mode: 'text/x-pgsql',
+            theme: 'monokai',
+            lineNumbers: true,
+            indentWithTabs: savedIndent.mode === 'tabs',
+            indentUnit: savedIndent.size,
+            tabSize: savedIndent.mode === 'tabs' ? savedIndent.size : 4,
+            smartIndent: true,
+            lineWrapping: true,
+            autoCloseBrackets: true,
+            extraKeys: {
+                'Ctrl-Enter': () => window.runSQL(),
+                'Cmd-Enter': () => window.runSQL(),
+                'Ctrl-S': () => { saveEditorContent(); showSaveIndicator('manual') },
+                'Cmd-S': () => { saveEditorContent(); showSaveIndicator('manual') },
+                'Shift-Alt-Down': function(cm) { duplicateLine(cm) },
+                'Cmd-Shift-D': function(cm) { duplicateLine(cm) },
+                'Enter': function(cm) {
+                    const cur = cm.getCursor()
+                    const line = cm.getLine(cur.line)
+                    const ch = cur.ch
+                    if (ch > 0 && ch < line.length) {
+                        const before = line[ch - 1], after = line[ch]
+                        if ((before === '{' && after === '}') || (before === '(' && after === ')')) {
+                            const indent = /^\s*/.exec(line)[0]
+                            const unit = cm.getOption('indentUnit')
+                            const tab = cm.getOption('indentWithTabs') ? '\t' : ' '
+                            const inner = indent + tab.repeat(unit > 0 ? 1 : unit)
+                            cm.replaceRange('\n' + inner + '\n' + indent, cur)
+                            cm.setCursor(cur.line + 1, inner.length)
+                            return
+                        }
+                    }
+                    return cm.execCommand('newlineAndIndent')
+                },
+            },
+            hintOptions: { completeSingle: false },
+        })
+        editor.on('inputRead', function(cm, change) {
+            if (change.text.length === 1 && /\w/.test(change.text[0]) && !cm.state.completionActive) {
+                cm.showHint({ hint: CodeMirror.hint.sql })
+            }
+        })
+        editor.on('changes', function() { startAutosave() })
+        updateIndentSelector(loadIndentPref())
+        loadSchema()
+    }
+    const saved = loadEditorContent(folder)
+    editor.setValue(saved || '-- Write your SQL here\n')
+    if (!saved) { setTimeout(() => editor.execCommand('selectAll'), 50) }
+    editor.refresh()
+    startAutosave()
+    $('results-content').innerHTML = ''
+    $('hint-content').style.display = 'none'
+    $('hint-content').innerHTML = ''
+    $('verify-result').style.display = 'none'
+}
+
+// ── Schema (autocomplete) ───────────────────────────
+
+async function loadSchema() {
+    try {
+        const result = await pgQuery(
+            "SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position"
+        )
+        const tables = {}
+        for (const row of result.rows) {
+            if (!tables[row.table_name]) tables[row.table_name] = []
+            tables[row.table_name].push(row.column_name)
+        }
+        if (editor) editor.setOption('hintOptions', { tables, completeSingle: false })
+    } catch(e) {}
+}
+
+// ── Run SQL ─────────────────────────────────────────
+
+window.runSQL = async function() {
+    if (!editor) return
+    saveEditorContent()
+    const sql = editor.getValue()
+    if (!sql.trim()) return
+
+    const btn = $('run-btn')
+    btn.disabled = true
+    btn.innerHTML = '<span class="loading-spinner"></span>'
+    $('results-section').style.display = 'block'
+    $('results-content').innerHTML = ''
+    $('verify-result').style.display = 'none'
+
+    const startTime = performance.now()
+    const results = await pgExec(sql)
+    const elapsed = ((performance.now() - startTime) / 1000).toFixed(2)
+    $('results-time').textContent = `${elapsed}s`
+
+    btn.disabled = false
+    btn.textContent = 'Run'
+
+    const container = $('results-content')
+
+    if (results.length === 0) {
+        container.innerHTML = '<div class="execute-ok">No results</div>'
+        return
+    }
+
+    let hasError = false
+    results.forEach(r => {
+        if (r.type === 'select') {
+            const block = document.createElement('div')
+            block.className = 'result-block'
+            block.innerHTML = `
+                <div class="result-label">SELECT (${r.row_count} rows)</div>
+                <table class="result-table">
+                    <thead><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+                    <tbody>${r.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+                </table>`
+            container.appendChild(block)
+        } else if (r.type === 'execute') {
+            const block = document.createElement('div')
+            block.className = 'result-block'
+            const msg = r.rows_affected != null ? `${r.rows_affected} row(s) affected` : 'Query executed successfully'
+            block.innerHTML = `<div class="execute-ok">${msg}</div>`
+            container.appendChild(block)
+        } else if (r.type === 'error') {
+            hasError = true
+            const block = document.createElement('div')
+            block.className = 'result-block'
+            block.innerHTML = `<div class="error-msg">${esc(r.error)}</div>`
+            container.appendChild(block)
+        }
+    })
+
+    if (!hasError && currentFolder) loadSchema()
+}
+
+// ── Verify ──────────────────────────────────────────
+
+window.verifySQL = async function() {
+    if (!editor || !currentFolder) return
+    saveEditorContent()
+    const userSql = editor.getValue().trim()
+    if (!userSql) return
+
+    const btn = $('verify-btn')
+    btn.disabled = true
+    btn.innerHTML = '<span class="loading-spinner"></span>'
+    $('results-section').style.display = 'block'
+    $('results-content').innerHTML = ''
+    $('verify-result').style.display = 'none'
+
+    try {
+        const result = await verifyChallenge(currentFolder, userSql)
+        btn.disabled = false
+        btn.textContent = 'Verify'
+
+        const vr = $('verify-result')
+        vr.style.display = 'block'
+
+        if (result.passed) {
+            vr.className = 'verify-result verify-pass'
+            vr.innerHTML = `<span class="verify-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#a6e22e" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#a6e22e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${esc(result.message)}</span>`
+            markComplete(currentFolder)
+            loadSchema()
+        } else {
+            vr.className = 'verify-result verify-fail'
+            vr.innerHTML = `<span class="verify-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#ff297b" stroke-width="1.5"/><path d="M5 5l6 6M11 5l-6 6" stroke="#ff297b" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>${esc(result.message)}</span>`
+            if (result.expected && result.actual) {
+                const container = $('results-content')
+                const diff = document.createElement('div')
+                diff.className = 'diff-panel'
+                diff.innerHTML = `
+                    <div class="diff-section">
+                        <div class="diff-header">Expected</div>
+                        <pre class="diff-content">${esc(JSON.stringify(result.expected, null, 2))}</pre>
+                    </div>
+                    <div class="diff-section">
+                        <div class="diff-header">Actual</div>
+                        <pre class="diff-content">${esc(JSON.stringify(result.actual, null, 2))}</pre>
+                    </div>`
+                container.appendChild(diff)
+            }
+        }
+    } catch(e) {
+        btn.disabled = false
+        btn.textContent = 'Verify'
+        const vr = $('verify-result')
+        vr.style.display = 'block'
+        vr.className = 'verify-result verify-fail'
+        vr.innerHTML = `<span class="verify-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#ff297b" stroke-width="1.5"/><path d="M5 5l6 6M11 5l-6 6" stroke="#ff297b" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Error: ${esc(e.message)}</span>`
+    }
+}
+
+async function verifyChallenge(challengeId, userSql) {
+    const db = await ensureDB()
+
+    const p = challengeId
+    const ep = 'challenges/' + p + '/expected.json'
+    const sp = 'challenges/' + p + '/setup.sql'
+
+    let expected, setupSql = ''
+
+    const expResp = await fetch(ep)
+    if (!expResp.ok) return { passed: false, message: `Challenge '${challengeId}' not found` }
+    expected = await expResp.json()
+
+    const setupResp = await fetch(sp)
+    if (setupResp.ok) setupSql = await setupResp.text()
+
+    const mode = expected.mode || 'query'
+
+    if (mode === 'query') {
+        if (setupSql) {
+            const sr = await db.exec(setupSql)
+            for (const r of sr) {
+                if (r.error) return { passed: false, message: 'Setup error: ' + r.error.message }
+            }
+        }
+        const result = await db.query(userSql)
+        const actualRows = result.rows.map(r => Object.values(r).map(v => String(v ?? '')))
+        const actualCols = result.rows.length > 0 ? Object.keys(result.rows[0]) : []
+        return compareResultSets(actualRows, actualCols, expected)
+    }
+
+    if (setupSql) {
+        const sr = await db.exec(setupSql)
+        for (const r of sr) {
+            if (r.error) return { passed: false, message: 'Setup error: ' + r.error.message }
+        }
+    }
+    const ur = await db.exec(userSql)
+    for (const r of ur) {
+        if (r.error) return { passed: false, message: 'SQL error: ' + r.error.message }
+    }
+
+    const checks = expected.checks || []
+    for (let i = 0; i < checks.length; i++) {
+        const chk = checks[i]
+        const cr = await db.query(chk.query)
+        const actual = cr.rows.map(r => Object.values(r).map(v => String(v ?? '')))
+        const exp = chk.expected.map(r => r.map(v => String(v)))
+        const a = JSON.stringify(actual), e = JSON.stringify(exp)
+        if (a !== e) {
+            return { passed: false, message: `Check ${i} failed.\nQuery: ${chk.query}\nExpected: ${JSON.stringify(exp)}\nActual: ${JSON.stringify(actual)}`, expected: exp, actual }
+        }
+    }
+    return { passed: true, message: 'All state checks passed' }
+}
+
+function compareResultSets(actualRows, actualCols, expected) {
+    const expCols = expected.columns, expRows = expected.rows
+
+    const aLower = actualCols.map(c => c.toLowerCase())
+    const eLower = expCols.map(c => c.toLowerCase())
+    if (JSON.stringify(aLower) !== JSON.stringify(eLower)) {
+        return { passed: false, message: `Column mismatch.\nExpected: ${expCols}\nActual: ${actualCols}`, expected: { columns: expCols, rows: expRows }, actual: { columns: actualCols, rows: actualRows } }
+    }
+
+    const sf = row => JSON.stringify(row.map(c => String(c)))
+    const aSet = new Set(actualRows.map(sf))
+    const eSet = new Set(expRows.map(sf))
+
+    if (aSet.size === eSet.size && [...aSet].every(x => eSet.has(x))) {
+        return { passed: true, message: `Passed (${actualRows.length} rows)` }
+    }
+
+    const missing = [...eSet].filter(x => !aSet.has(x)).slice(0, 5)
+    const extra = [...aSet].filter(x => !eSet.has(x)).slice(0, 5)
+    const parts = []
+    if (missing.length) parts.push(`Missing ${missing.length} row(s): ${missing.map(JSON.parse).map(r => `[${r}]`).join(', ')}`)
+    if (extra.length) parts.push(`Extra ${extra.length} row(s): ${extra.map(JSON.parse).map(r => `[${r}]`).join(', ')}`)
+    return { passed: false, message: parts.join('; '), expected: { columns: expCols, rows: [...eSet].map(JSON.parse) }, actual: { columns: actualCols, rows: [...aSet].map(JSON.parse) } }
+}
+
+// ── Hints ───────────────────────────────────────────
+
+window.showHint = async function() {
+    if (!currentFolder) return
+    const meta = challengeMeta[currentFolder]
+    if (!meta) return
+    const hints = meta.hints || []
+    const hc = $('hint-content')
+    hc.style.display = 'block'
+    if (hintLevel >= hints.length) {
+        if (hints.length === 0) {
+            const item = document.createElement('div')
+            item.className = 'hint-item'
+            item.innerHTML = '<span class="hint-label">No hints available</span>'
+            hc.appendChild(item)
+        }
+        $('hint-btn').disabled = true
+        return
+    }
+    const item = document.createElement('div')
+    item.className = 'hint-item'
+    item.innerHTML = `<span class="hint-label">Hint ${hintLevel + 1}/${hints.length}</span><span>${esc(hints[hintLevel])}</span>`
+    hc.appendChild(item)
+    hintLevel++
+    if (hintLevel >= hints.length) $('hint-btn').disabled = true
+}
+
+// ── psql commands ───────────────────────────────────
+
+window.runPsql = async function() {
+    const input = $('psql-input')
+    if (!input) return
+    const cmd = input.value.trim()
+    if (!cmd) return
+
+    $('results-section').style.display = 'block'
+    const container = $('results-content')
+
+    if (cmd.startsWith('\\')) {
+        const parts = cmd.split(/\s+/)
+        const main = parts[0].toLowerCase()
+
+        if (main === '\\?') {
+            container.innerHTML = `<div class="psql-result-text">${esc(PSQL_HELP)}</div>`; return
+        }
+        if (main === '\\x') {
+            psqlExpanded = !psqlExpanded
+            container.innerHTML = `<div class="execute-ok">Expanded display is ${psqlExpanded ? 'on' : 'off'}.</div>`; return
+        }
+        if (main === '\\conninfo') {
+            container.innerHTML = `<div class="psql-result-text">You are connected to database "pgkata" as user "pglite" via PostgreSQL (WASM) at version ${pg ? '16' : '?'}.</div>`; return
+        }
+        if (main === '\\l') return psqlTable(container, `SELECT datname AS name, pg_catalog.pg_get_userbyid(datdba) AS owner, pg_encoding_to_char(encoding) AS encoding, datcollate AS collate, datctype AS ctype FROM pg_catalog.pg_database ORDER BY datname`, 'Databases')
+        if (main === '\\dn') return psqlTable(container, `SELECT nspname AS schema_name, pg_catalog.pg_get_userbyid(nspowner) AS owner FROM pg_catalog.pg_namespace ORDER BY nspname`, 'Schemas')
+        if (main === '\\dt') return psqlTable(container, `SELECT schemaname AS schema, tablename AS table_name, tableowner AS owner FROM pg_catalog.pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename`, 'Tables')
+        if (main === '\\di') return psqlTable(container, `SELECT schemaname AS schema, indexname AS index_name, tablename AS table_name FROM pg_catalog.pg_indexes WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename, indexname`, 'Indexes')
+        if (main === '\\dv') return psqlTable(container, `SELECT schemaname AS schema, viewname AS view_name, viewowner AS owner FROM pg_catalog.pg_views WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, viewname`, 'Views')
+        if (main === '\\df') return psqlTable(container, `SELECT n.nspname AS schema, p.proname AS name, pg_catalog.pg_get_function_result(p.oid) AS result_type, pg_catalog.pg_get_function_arguments(p.oid) AS arguments FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON p.pronamespace = n.oid WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND p.prokind = 'f' ORDER BY n.nspname, p.proname`, 'Functions')
+        if (main === '\\du') return psqlTable(container, `SELECT rolname AS role_name, rolsuper AS superuser, rolcreatedb AS create_db FROM pg_catalog.pg_roles ORDER BY rolname`, 'Roles')
+
+        if ((main === '\\d' || main === '\\d+') && parts.length > 1) {
+            const name = parts[parts.length - 1]
+            const r = await tryPsqlQuery(`SELECT column_name AS "Column", data_type AS "Type", CASE WHEN is_nullable = 'YES' THEN 'YES' ELSE 'NO' END AS "Nullable", COALESCE(column_default, '') AS "Default" FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${name.replace(/'/g, "''")}' ORDER BY ordinal_position`)
+            if (r && r.columns && r.columns.length > 0) {
+                container.innerHTML = ''
+                const block = document.createElement('div')
+                block.className = 'result-block'
+                block.innerHTML = `<div class="result-label">Table "public.${esc(name)}"</div>
+                    <table class="result-table"><thead><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+                    <tbody>${r.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+                container.appendChild(block)
+                const cr = await tryPsqlQuery(`SELECT con.conname AS "Constraint", CASE con.contype WHEN 'p' THEN 'PRIMARY KEY' WHEN 'u' THEN 'UNIQUE' WHEN 'f' THEN 'FOREIGN KEY' WHEN 'c' THEN 'CHECK' ELSE contype::text END AS "Type" FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid = cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace = n.oid WHERE cls.relname = '${name.replace(/'/g, "''")}' AND n.nspname = 'public' ORDER BY con.conname`)
+                if (cr && cr.rows.length > 0) {
+                    const cb = document.createElement('div')
+                    cb.className = 'result-block'
+                    cb.innerHTML = `<div class="result-label">Constraints (${cr.rows.length})</div>
+                        <table class="result-table"><thead><tr>${cr.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+                        <tbody>${cr.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+                    container.appendChild(cb)
+                }
+                return
+            }
+            container.innerHTML = `<div class="error-msg">Did not find any relation named "${esc(name)}".</div>`; return
+        }
+
+        if (main === '\\d' || main === '\\d+') {
+            const q = main === '\\d+'
+                ? `SELECT tablename AS table_name, tableowner AS owner, (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = t.tablename) AS columns, (SELECT COUNT(*) FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid = cls.oid WHERE cls.relname = t.tablename) AS constraints FROM pg_catalog.pg_tables t WHERE schemaname = 'public' ORDER BY tablename`
+                : `SELECT tablename AS table_name, tableowner AS owner, (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = t.tablename) AS columns FROM pg_catalog.pg_tables t WHERE schemaname = 'public' ORDER BY tablename`
+            return psqlTable(container, q, 'Tables')
+        }
+
+        container.innerHTML = `<div class="error-msg">Unknown command: ${esc(main)}. Type \\? for help.</div>`; return
+    }
+
+    const result = await pgQuery(cmd)
+    const tbl = rowsToTable(result)
+    if (tbl.columns.length > 0) {
+        container.innerHTML = ''
+        const block = document.createElement('div')
+        block.className = 'result-block'
+        block.innerHTML = `<div class="result-label">psql output (${tbl.row_count} rows)</div>
+            <table class="result-table"><thead><tr>${tbl.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+            <tbody>${tbl.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+        container.appendChild(block)
+    } else {
+        container.innerHTML = `<div class="execute-ok">Command executed</div>`
+    }
+}
+
+const PSQL_HELP = `Available psql meta-commands:
+    \\l           List databases
+    \\dn          List schemas
+    \\dt          List tables
+    \\d  [name]   Describe table (columns + constraints)
+    \\d+ [name]   Same as \\d (extended detail)
+    \\di          List indexes
+    \\dv          List views
+    \\df          List functions
+    \\du          List roles
+    \\x           Toggle expanded display
+    \\conninfo    Show connection info
+    \\?           Show this help
+    SQL          Any SQL statement is executed directly`
+
+async function tryPsqlQuery(sql) {
+    try {
+        const r = await pgQuery(sql)
+        return rowsToTable(r)
+    } catch(e) { return null }
+}
+
+async function psqlTable(container, sql, label) {
+    const r = await tryPsqlQuery(sql)
+    if (!r || !r.columns.length) {
+        container.innerHTML = `<div class="execute-ok">No results</div>`; return
+    }
+    container.innerHTML = ''
+    const block = document.createElement('div')
+    block.className = 'result-block'
+    block.innerHTML = `<div class="result-label">${esc(label)} (${r.row_count} rows)</div>
+        <table class="result-table"><thead><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+        <tbody>${r.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+    container.appendChild(block)
+}
+
+// ── Beautify ────────────────────────────────────────
+
+window.beautifySQL = function() {
+    if (!editor) return
+    for (let i = 0; i < editor.lineCount(); i++) editor.indentLine(i, 'smart')
+    showSaveIndicator('manual')
+}
+
+function duplicateLine(cm) {
+    if (!cm) return
+    const sel = cm.getSelection()
+    if (sel) { cm.replaceSelection(sel + '\n' + sel); return }
+    const cursor = cm.getCursor(), line = cm.getLine(cursor.line)
+    cm.replaceRange('\n' + line, { line: cursor.line, ch: line.length })
+    cm.setCursor(cursor.line + 1, cursor.ch)
+}
+
+// ── Reset / Checkpoint ──────────────────────────────
+
+window.resetDB = async function() {
+    if (!confirm('This will drop all tables in pgKata. All data will be lost. Continue?')) return
+    $('results-section').style.display = 'block'
+    $('results-content').innerHTML = '<div class="execute-ok">Resetting database...</div>'
+    try {
+        await ensureDB()
+        await pg.exec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
+        $('results-content').innerHTML = '<div class="execute-ok">Database recreated successfully</div>'
+        loadSchema()
+    } catch(e) {
+        $('results-content').innerHTML = `<div class="error-msg">${esc(e.message)}</div>`
+    }
+}
+
+window.showRestore = function() {
+    $('restore-overlay').style.display = 'flex'
+    const all = buildChallengeList()
+    const list = $('checkpoint-list')
+    list.innerHTML = all.map(c => `
+        <div class="checkpoint-item" onclick="window.confirmRestore('${c.id}')">
+            <span class="checkpoint-id">${esc(c.id)}</span>
+            <span class="checkpoint-title">${esc(c.title)}</span>
+        </div>
+    `).join('')
+}
+
+window.hideRestore = function() {
+    $('restore-overlay').style.display = 'none'
+}
+
+window.confirmRestore = async function(checkpoint) {
+    hideRestore()
+    $('restore-progress-overlay').style.display = 'flex'
+    const body = $('restore-progress-body')
+    body.innerHTML = '<div class="restore-progress-item"><span class="restore-spinner"></span><span>Resetting database...</span></div>'
+
+    try {
+        const db = await ensureDB()
+
+        const all = buildChallengeList()
+        const idx = all.findIndex(c => c.id === checkpoint)
+        if (idx === -1) throw new Error('Checkpoint not found')
+        const target = all.slice(0, idx + 1)
+
+        await db.exec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
+        const progress = {}
+        let failed = null
+
+        for (const c of target) {
+            const resp = await fetch('challenges/' + c.id + '/setup.sql')
+            if (!resp.ok) {
+                progress[c.id] = true
+                continue
+            }
+            const setupSql = await resp.text()
+            if (!setupSql.trim()) {
+                progress[c.id] = true
+                continue
+            }
+            try {
+                await db.exec(setupSql)
+                progress[c.id] = true
+            } catch(e) {
+                failed = { id: c.id, error: e.message }
+                break
+            }
+        }
+
+        saveProgress(progress)
+
+        body.innerHTML = ''
+        if (failed) {
+            all.forEach(c => {
+                const done = progress[c.id]
+                const isFailed = c.id === failed.id
+                const div = document.createElement('div')
+                div.className = 'restore-progress-item'
+                if (done) {
+                    div.innerHTML = `<span class="restore-ok"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#a6e22e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${esc(c.id)} ${esc(c.title)}</span>`
+                } else if (isFailed) {
+                    div.innerHTML = `<span class="restore-fail"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#ff297b" stroke-width="2" stroke-linecap="round"/></svg></span><span>${esc(c.id)} ${esc(c.title)}</span>`
+                } else {
+                    div.innerHTML = `<span class="restore-skip">&ndash;</span><span>${esc(c.id)} ${esc(c.title)}</span>`
+                }
+                body.appendChild(div)
+            })
+            const err = document.createElement('div')
+            err.className = 'error-msg'
+            err.style.marginTop = '12px'
+            err.textContent = 'Failed at ' + failed.id + ': ' + failed.error
+            body.appendChild(err)
+            setTimeout(() => { $('restore-progress-overlay').style.display = 'none' }, 4000)
+        } else {
+            all.forEach(c => {
+                if (progress[c.id]) {
+                    const div = document.createElement('div')
+                    div.className = 'restore-progress-item'
+                    div.innerHTML = `<span class="restore-ok"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#a6e22e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${esc(c.id)} ${esc(c.title)}</span>`
+                    body.appendChild(div)
+                }
+            })
+            setTimeout(() => { $('restore-progress-overlay').style.display = 'none' }, 1500)
+        }
+        loadChallenges()
+    } catch(e) {
+        body.innerHTML = `<div class="error-msg">${esc(e.message)}</div>`
+        setTimeout(() => { $('restore-progress-overlay').style.display = 'none' }, 3000)
+    }
+}
+
+// ── Helpers ─────────────────────────────────────────
+
+function esc(text) {
+    if (text === null || text === undefined) return 'NULL'
+    const div = document.createElement('div')
+    div.textContent = String(text)
+    return div.innerHTML
+}
+
+// ── Boot ────────────────────────────────────────────
+
+loadChallenges()
+</script>
+</body>
+</html>

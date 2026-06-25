@@ -1,0 +1,602 @@
+{
+  "01_foundations/09_alter_table": {
+    "title": "Altering database records",
+    "difficulty": "easy",
+    "description": "Add a phone_number column to the customers table.",
+    "hints": [
+      "Use ALTER TABLE customers ADD COLUMN",
+      "The column needs a name and data type",
+      "Use VARCHAR(20) for phone numbers"
+    ]
+  },
+  "01_foundations/11_phone_formatting": {
+    "title": "Format phone numbers",
+    "difficulty": "medium",
+    "description": "The customers table has been pre-loaded with 8 customer records (IDs 1-8). Add a phone_number column, then set phone numbers: customer 5 gets '1234567890', customer 6 gets '123-456-7890', customer 7 gets '(987)654-3210', customer 8 gets '9876543210'.",
+    "hints": [
+      "ALTER TABLE ... ADD COLUMN phone_number VARCHAR(20)",
+      "Use UPDATE with CASE based on customer_id",
+      "Phone numbers are intentionally stored in different formats"
+    ]
+  },
+  "01_foundations/08_insert_records": {
+    "title": "Inserting database records",
+    "difficulty": "easy",
+    "description": "The customers table exists but is empty. Insert 5 customer records of your choice. Each customer needs: firstname, lastname, username, password, email, and created_on.",
+    "hints": [
+      "Use INSERT INTO customers (columns) VALUES (values)",
+      "Add CURRENT_TIMESTAMP for created_on",
+      "Include all required columns in the INSERT"
+    ]
+  },
+  "01_foundations/03_string_functions": {
+    "title": "String Functions",
+    "difficulty": "easy",
+    "description": "Format user names: show username in uppercase, email in lowercase, and the length of their bio.",
+    "hints": [
+      "Use UPPER() for the username",
+      "Use LOWER() for the email",
+      "Use LENGTH() for the bio character count",
+      "Use aliases with AS for clean column names"
+    ]
+  },
+  "01_foundations/02_order_limit": {
+    "title": "ORDER BY and LIMIT",
+    "difficulty": "easy",
+    "description": "List the top 3 most expensive products by price, from highest to lowest.",
+    "hints": [
+      "Use ORDER BY price DESC",
+      "Add LIMIT 3 to get only the top 3",
+      "SELECT product_name and price"
+    ]
+  },
+  "01_foundations/10_delete_records": {
+    "title": "Deleting database records",
+    "difficulty": "easy",
+    "description": "The customers table has been pre-loaded with records including two customers with lastname 'Smith'. Delete all customers whose lastname is 'Smith', then the remaining customers should be: Alison Riesher, Charlie Brown, Diana Lee.",
+    "hints": [
+      "Use DELETE FROM customers",
+      "Use WHERE to target only Smith entries",
+      "Verify with SELECT before deleting"
+    ]
+  },
+  "01_foundations/06_group_by_having": {
+    "title": "GROUP BY with HAVING",
+    "difficulty": "easy",
+    "description": "Find departments that have at least 2 employees and a total salary budget exceeding $150,000. Show department, headcount, and total salary.",
+    "hints": [
+      "Use GROUP BY department",
+      "Use COUNT(*) for headcount",
+      "Use SUM(salary) for total salary",
+      "Use HAVING to filter after grouping"
+    ]
+  },
+  "01_foundations/01_select_where": {
+    "title": "SELECT with WHERE",
+    "difficulty": "easy",
+    "description": "Query employees who earn more than $60,000 in the Engineering department.",
+    "hints": [
+      "Use WHERE salary > 60000",
+      "Add AND department = 'Engineering'",
+      "SELECT only first_name, last_name, and salary"
+    ]
+  },
+  "01_foundations/05_aggregate_basics": {
+    "title": "Aggregate Basics",
+    "difficulty": "easy",
+    "description": "Calculate total revenue, average order value, number of orders, and the highest single order for each month in 2024.",
+    "hints": [
+      "Use SUM(total) for total revenue",
+      "Use AVG(total) for average order value",
+      "Use COUNT(*) for number of orders",
+      "Use MAX(total) for highest single order",
+      "Use EXTRACT(MONTH FROM order_date) or DATE_TRUNC for grouping"
+    ]
+  },
+  "01_foundations/00_create_table": {
+    "title": "Creating a table",
+    "difficulty": "easy",
+    "description": "Create the customers table from scratch. Include columns: customer_id (SERIAL PRIMARY KEY), firstname, lastname, username, password, email (all VARCHAR NOT NULL), and created_on (TIMESTAMP DEFAULT CURRENT_TIMESTAMP).",
+    "hints": [
+      "Use CREATE TABLE with column definitions",
+      "Add SERIAL PRIMARY KEY for customer_id",
+      "Include password as a VARCHAR column between username and email"
+    ]
+  },
+  "01_foundations/07_union_set": {
+    "title": "Set Operations (UNION, INTERSECT, EXCEPT)",
+    "difficulty": "medium",
+    "description": "You have two tables: active_users and archived_users. Find all email addresses that appear in BOTH tables (INTERSECT), and also find emails that are in active_users but NOT in archived_users (EXCEPT).",
+    "hints": [
+      "Use INTERSECT to find common emails",
+      "Use EXCEPT to find emails only in active",
+      "Both SELECT statements must return the same number of columns",
+      "No need for ORDER BY"
+    ]
+  },
+  "01_foundations/04_date_functions": {
+    "title": "Date Functions",
+    "difficulty": "easy",
+    "description": "Find all projects that were overdue as of April 1, 2025 and show how many days overdue they were.",
+    "hints": [
+      "Use CURRENT_DATE to get today's date",
+      "Use end_date < CURRENT_DATE to find overdue projects",
+      "Use CURRENT_DATE - end_date to get days overdue",
+      "Filter out projects with NULL end_date"
+    ]
+  },
+  "05_window/02_rank_dense": {
+    "title": "RANK and DENSE_RANK",
+    "difficulty": "medium",
+    "description": "Rank employees by salary within each department. Show RANK and DENSE_RANK side by side so you can see the difference when salaries tie.",
+    "hints": [
+      "RANK() leaves gaps after ties (1,1,3,4)",
+      "DENSE_RANK() does not leave gaps (1,1,2,3)",
+      "Add a tie by making two employees have the same salary in one department"
+    ]
+  },
+  "05_window/03_ntile": {
+    "title": "NTILE",
+    "difficulty": "medium",
+    "description": "Divide employees into 4 quartiles based on salary across the whole company. Show name, salary, and which quartile they fall into (1 = highest, 4 = lowest).",
+    "hints": [
+      "NTILE(4) divides the ordered rows into 4 buckets",
+      "ORDER BY salary DESC so quartile 1 has highest salaries",
+      "No PARTITION BY needed \u2014 this is company-wide"
+    ]
+  },
+  "05_window/06_frames": {
+    "title": "Window Frames and Running Totals",
+    "difficulty": "hard",
+    "description": "Calculate a running total of sales per month, plus a 3-month moving average. Show month, monthly_sales, running_total, and moving_avg_3mo.",
+    "hints": [
+      "For running total: SUM(amount) OVER (ORDER BY month ROWS UNBOUNDED PRECEDING)",
+      "For 3-month moving average: AVG(amount) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)",
+      "Use DATE_TRUNC('month', sale_date) for monthly aggregation first"
+    ]
+  },
+  "05_window/05_first_last_value": {
+    "title": "FIRST_VALUE and LAST_VALUE",
+    "difficulty": "hard",
+    "description": "For each employee, show their salary compared to the highest and lowest salary in their department. Use FIRST_VALUE and LAST_VALUE with window frames.",
+    "hints": [
+      "FIRST_VALUE(salary) OVER (PARTITION BY department ORDER BY salary DESC) gives the highest",
+      "LAST_VALUE needs a frame: ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",
+      "Without the frame, LAST_VALUE only sees up to the current row"
+    ]
+  },
+  "05_window/01_row_number": {
+    "title": "ROW_NUMBER",
+    "difficulty": "medium",
+    "description": "Assign a sequential number to each order per customer, ordered by order_date descending (most recent = 1). Show customer name, order date, total, and the row number.",
+    "hints": [
+      "PARTITION BY customer_id to restart numbering per customer",
+      "ORDER BY order_date DESC for most recent first",
+      "ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC)"
+    ]
+  },
+  "05_window/04_lag_lead": {
+    "title": "LAG and LEAD",
+    "difficulty": "medium",
+    "description": "For each employee, show their salary alongside the previous employee's salary (by hire date) and the next employee's salary. Also show the difference from the previous salary.",
+    "hints": [
+      "LAG(salary) OVER (ORDER BY hire_date) gets previous row's salary",
+      "LEAD(salary) OVER (ORDER BY hire_date) gets next row's salary",
+      "LAG(salary, 1, 0) uses 0 as default when there's no previous row"
+    ]
+  },
+  "09_leetcode/05_tree_traversal": {
+    "title": "Tree Traversal with Recursive CTE",
+    "difficulty": "expert",
+    "description": "Given a 'nodes' table where each node has a parent_id (NULL for root), classify each node as 'Root' (no parent), 'Inner' (has both parent and children), or 'Leaf' (has parent but no children).",
+    "hints": [
+      "Use a recursive CTE to find all ancestors/descendants",
+      "Or use simpler approach with subqueries: check p_id IS NULL for Root",
+      "Check EXISTS (SELECT 1 FROM nodes WHERE parent_id = n.id) for Inner vs Leaf"
+    ]
+  },
+  "09_leetcode/04_median": {
+    "title": "Median Calculation",
+    "difficulty": "hard",
+    "description": "Find the median salary for each department. Use percentile_cont or a combination of ROW_NUMBER and COUNT to compute the median.",
+    "hints": [
+      "PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) computes the median directly",
+      "Use it as a window function: PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) OVER (PARTITION BY department)",
+      "SELECT DISTINCT if using window functions to avoid duplicates"
+    ]
+  },
+  "09_leetcode/03_stadium": {
+    "title": "Human Traffic of Stadium",
+    "difficulty": "hard",
+    "description": "Find records where there are 3 or more consecutive rows with `people >= 100`. Show visit_date and people for those rows.",
+    "hints": [
+      "Use LAG and LEAD to compare consecutive rows",
+      "A row is part of a consecutive group if it OR its neighbors have people >= 100 in a chain of 3",
+      "Alternative: subtract row_number from some grouping value to form groups"
+    ]
+  },
+  "09_leetcode/02_consecutive": {
+    "title": "Consecutive Numbers",
+    "difficulty": "hard",
+    "description": "Find all numbers that appear at least 3 times consecutively in the Logs table. Use the LAG and LEAD window functions.",
+    "hints": [
+      "Use LAG(num, 1) and LAG(num, 2) to look back at previous rows",
+      "Filter WHERE num = LAG(num, 1) OVER (ORDER BY id) AND num = LAG(num, 2) OVER (ORDER BY id)",
+      "SELECT DISTINCT num to avoid duplicates"
+    ]
+  },
+  "09_leetcode/01_department_top3": {
+    "title": "Department Top Three Salaries",
+    "difficulty": "hard",
+    "description": "Find employees who earn the top three salaries in each department. If fewer than 3 employees in a department, return them all. Show department, employee name, and salary.",
+    "hints": [
+      "Use DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC)",
+      "DENSE_RANK handles ties correctly (ties share the same rank)",
+      "Filter WHERE rank <= 3 in an outer query"
+    ]
+  },
+  "06_specialties/03_fulltext": {
+    "title": "Full-Text Search",
+    "difficulty": "hard",
+    "description": "Implement full-text search on a blog_posts table. Find posts that match the query 'database performance tuning' using tsvector and tsquery. Show title, rank, and a highlighted snippet.",
+    "hints": [
+      "Use to_tsvector('english', title || ' ' || body) to create the search vector",
+      "Use plainto_tsquery('english', 'database performance tuning') for the query",
+      "Use ts_rank() to order by relevance",
+      "Use ts_headline() to show highlighted matches"
+    ]
+  },
+  "06_specialties/04_enums": {
+    "title": "Enum Types",
+    "difficulty": "medium",
+    "description": "Create and use a custom ENUM type for order statuses. Then query to find all orders with statuses that are NOT 'delivered' or 'cancelled' (i.e., active orders).",
+    "hints": [
+      "CREATE TYPE order_status AS ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled')",
+      "Use the enum type as a column type in the orders table",
+      "Filter with WHERE status NOT IN ('delivered', 'cancelled')"
+    ]
+  },
+  "06_specialties/05_type_casting": {
+    "title": "Type Casting and Formatting",
+    "difficulty": "medium",
+    "description": "You have a table with messy data: dates stored as strings, prices as text with dollar signs, and phone numbers in inconsistent formats. Clean and transform each column into proper types.",
+    "hints": [
+      "Use ::DATE to cast strings to proper date type",
+      "Use REPLACE to remove $ then ::NUMERIC",
+      "Use REGEXP_REPLACE for phone number formatting",
+      "TO_CHAR for output formatting"
+    ]
+  },
+  "06_specialties/06_password_encryption": {
+    "title": "Encrypt passwords in users table",
+    "difficulty": "medium",
+    "description": "Create a users table with plain-text passwords and explore encryption with pgcrypto.",
+    "hints": [
+      "CREATE TABLE users with user_id, username, password",
+      "Enable the pgcrypto extension with CREATE EXTENSION",
+      "Use crypt() and gen_salt() to hash passwords"
+    ]
+  },
+  "06_specialties/01_jsonb": {
+    "title": "JSONB Operations",
+    "difficulty": "medium",
+    "description": "Query a table with JSONB data. Find all products where the metadata contains a color field, and extract specific fields from the JSONB into separate columns.",
+    "hints": [
+      "Use -> to get JSONB field as JSON, ->> to get as text",
+      "Use @> containment operator or ? key-existence operator",
+      "Example: metadata @> '{\"color\": \"red\"}'::jsonb",
+      "Project: metadata->>'color' AS color"
+    ]
+  },
+  "06_specialties/00_create_user": {
+    "title": "Creating a new read-only user",
+    "difficulty": "medium",
+    "description": "Create a new database user named 'readonly_user' with a password, then grant them SELECT-only access on the customers table.",
+    "hints": [
+      "Use CREATE USER ... WITH PASSWORD",
+      "GRANT SELECT ON customers TO readonly_user",
+      "The user can read but not modify data"
+    ]
+  },
+  "06_specialties/02_arrays": {
+    "title": "Array Operations",
+    "difficulty": "medium",
+    "description": "Work with PostgreSQL arrays. Find all employees who have 'Python' in their skills array, show their name, and the total number of skills they have.",
+    "hints": [
+      "Use ANY() or @> to check array containment",
+      "Use array_length(skills, 1) for count of skills",
+      "Use ARRAY['Python', 'SQL']::varchar[] or '{Python,SQL}'::varchar[] syntax"
+    ]
+  },
+  "03_aggregation/02_having": {
+    "title": "HAVING Clause",
+    "difficulty": "easy",
+    "description": "Find departments where the average salary is above $60,000 and there are at least 3 employees.",
+    "hints": [
+      "GROUP BY department",
+      "HAVING AVG(salary) > 60000 AND COUNT(*) >= 3",
+      "AVG(salary) filters groups after aggregation"
+    ]
+  },
+  "03_aggregation/03_rollup_cube": {
+    "title": "ROLLUP and CUBE",
+    "difficulty": "medium",
+    "description": "Using ROLLUP, generate total sales grouped by (year, quarter) with subtotals per year and a grand total. Also try CUBE.",
+    "hints": [
+      "Use GROUP BY ROLLUP(year, quarter)",
+      "EXTRACT(YEAR FROM order_date) for year",
+      "EXTRACT(QUARTER FROM order_date) for quarter",
+      "ROLLUP adds subtotals for each level of grouping"
+    ]
+  },
+  "03_aggregation/00_duplicates": {
+    "title": "CREATE bookmarks table & find duplicates",
+    "difficulty": "medium",
+    "description": "Create a bookmarks table, insert data including intentional duplicates, then identify them.",
+    "hints": [
+      "CREATE TABLE with id SERIAL PRIMARY KEY, url, name, description",
+      "Some URLs appear more than once in the INSERT",
+      "Use GROUP BY with COUNT to find the duplicate URL"
+    ]
+  },
+  "03_aggregation/04_filtered_agg": {
+    "title": "Filtered Aggregates",
+    "difficulty": "medium",
+    "description": "For each month in 2024, show total sales, and break out sales by region (North, South, East, West) in separate columns using FILTER.",
+    "hints": [
+      "Use FILTER (WHERE region = 'North') inside each aggregate",
+      "DATE_TRUNC('month', sale_date) for month grouping",
+      "Example: SUM(amount) FILTER (WHERE region = 'North') AS north_sales"
+    ]
+  },
+  "03_aggregation/01_group_basics": {
+    "title": "GROUP BY Basics",
+    "difficulty": "easy",
+    "description": "For each product category, find the total stock, average price, cheapest product price, and most expensive product price.",
+    "hints": [
+      "GROUP BY category",
+      "SUM(stock), AVG(price), MIN(price), MAX(price)",
+      "ROUND(AVG(price), 2) for clean decimals"
+    ]
+  },
+  "03_aggregation/05_case_aggregation": {
+    "title": "Conditional Aggregation with CASE",
+    "difficulty": "medium",
+    "description": "Create a summary showing how many students got each letter grade (A: >=90, B: >=80, C: >=70, D: >=60, F: <60) for each course. Show course name and count per grade.",
+    "hints": [
+      "Use CASE inside COUNT() for each grade bucket",
+      "CASE WHEN score >= 90 THEN 1 END counts A's",
+      "GROUP BY course_id, course_name"
+    ]
+  },
+  "08_expert/02_isolation_levels": {
+    "title": "Transaction Isolation Levels",
+    "difficulty": "hard",
+    "description": "Demonstrate the difference between READ COMMITTED and REPEATABLE READ isolation levels. The query should return the current balance from the accounts table using SERIALIZABLE isolation.",
+    "hints": [
+      "Use BEGIN ISOLATION LEVEL SERIALIZABLE;",
+      "SELECT balance FROM accounts WHERE account_id = 1;",
+      "Then COMMIT;",
+      "Different isolation levels affect what dirty reads, non-repeatable reads, and phantom reads are possible"
+    ]
+  },
+  "08_expert/01_recursive_cte": {
+    "title": "Recursive CTE",
+    "difficulty": "hard",
+    "description": "Using a recursive CTE, generate the organizational hierarchy starting from the CEO (manager_id IS NULL). Show employee name, level (depth), and the path from CEO to employee.",
+    "hints": [
+      "Anchor: SELECT employee_id, name, 0 AS level, name::TEXT AS path WHERE manager_id IS NULL",
+      "Recursive: JOIN employees ON manager_id = anchor.employee_id, increment level",
+      "Append to path with path || ' -> ' || e.name",
+      "Use UNION ALL between anchor and recursive members"
+    ]
+  },
+  "08_expert/05_partial_index": {
+    "title": "Partial and Expression Indexes",
+    "difficulty": "expert",
+    "description": "Create a partial index on orders for only 'pending' status orders. Then create an expression index on LOWER(email) in the customers table. Query using both indexes.",
+    "hints": [
+      "Partial index: CREATE INDEX idx_pending_orders ON orders(status) WHERE status = 'pending'",
+      "Expression index: CREATE INDEX idx_lower_email ON customers(LOWER(email))",
+      "Query must use the same expression: WHERE LOWER(email) = 'alice@example.com'",
+      "The partial index is only used when WHERE matches the condition"
+    ]
+  },
+  "08_expert/04_explain_analyze": {
+    "title": "EXPLAIN ANALYZE",
+    "difficulty": "hard",
+    "description": "First create an index on the orders(customer_id) column. Then run EXPLAIN ANALYZE on a query that joins customers with orders. The output should show an Index Scan being used.",
+    "hints": [
+      "CREATE INDEX idx_orders_customer ON orders(customer_id)",
+      "EXPLAIN ANALYZE SELECT ... JOIN orders ON customer_id ...",
+      "The plan should show 'Index Scan' or 'Bitmap Index Scan' using the created index"
+    ]
+  },
+  "08_expert/06_row_level_security": {
+    "title": "Row-Level Security",
+    "difficulty": "expert",
+    "description": "Implement Row-Level Security (RLS) on the 'documents' table. Each user should only see their own documents. Enable RLS, create a policy, and query as a specific user.",
+    "hints": [
+      "ALTER TABLE documents ENABLE ROW LEVEL SECURITY",
+      "CREATE POLICY user_documents ON documents USING (owner = current_user)",
+      "Create a test user and grant SELECT on the table",
+      "SET ROLE test_user; SELECT * FROM documents; RESET ROLE;"
+    ]
+  },
+  "08_expert/03_for_update": {
+    "title": "FOR UPDATE and SKIP LOCKED",
+    "difficulty": "hard",
+    "description": "Select the next available (unlocked) job from a queue using SKIP LOCKED. Mark it as 'in_progress' by updating its status, and return the job details.",
+    "hints": [
+      "BEGIN the transaction first",
+      "SELECT ... FROM jobs WHERE status = 'pending' ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1",
+      "UPDATE jobs SET status = 'in_progress' WHERE job_id = ...",
+      "Then COMMIT",
+      "SKIP LOCKED skips rows locked by other transactions"
+    ]
+  },
+  "07_plpgsql/02_param_function": {
+    "title": "Function with Parameters",
+    "difficulty": "hard",
+    "description": "Create a function 'get_products_by_price_range(min_price NUMERIC, max_price NUMERIC)' that returns all products within a price range (inclusive).",
+    "hints": [
+      "Use RETURNS TABLE(product_id INT, name VARCHAR, price NUMERIC)",
+      "RETURN QUERY SELECT ... WHERE price BETWEEN min_price AND max_price",
+      "Use LANGUAGE plpgsql"
+    ]
+  },
+  "07_plpgsql/03_set_returning": {
+    "title": "Set-Returning Function",
+    "difficulty": "hard",
+    "description": "Create a function 'get_department_summary()' that returns a table with department, employee_count, total_salary, and avg_salary for each department.",
+    "hints": [
+      "Use RETURNS TABLE(department VARCHAR, employee_count BIGINT, ...)",
+      "RETURN QUERY SELECT department, COUNT(*), SUM(salary), AVG(salary) GROUP BY department",
+      "Call the function with SELECT * FROM get_department_summary()"
+    ]
+  },
+  "07_plpgsql/05_trigger": {
+    "title": "Triggers",
+    "difficulty": "hard",
+    "description": "Create an audit trigger that logs all changes to the 'employees' table. When salary is updated, insert a record into 'salary_audit' with the old and new salary.",
+    "hints": [
+      "Create salary_audit table first (audit_id, employee_id, old_salary, new_salary, changed_at)",
+      "Create a trigger function that uses OLD and NEW to access old/new values",
+      "CREATE TRIGGER AFTER UPDATE OF salary ON employees FOR EACH ROW EXECUTE FUNCTION ..."
+    ]
+  },
+  "07_plpgsql/04_stored_procedure": {
+    "title": "Stored Procedure",
+    "difficulty": "hard",
+    "description": "Create a stored procedure 'transfer_product_stock(from_product_id INT, to_product_id INT, qty INT)' that transfers stock between products. It should decrement quantity from the source and increment on the destination, and raise an exception if insufficient stock.",
+    "hints": [
+      "Use CREATE OR REPLACE PROCEDURE (not FUNCTION)",
+      "Use LANGUAGE plpgsql",
+      "Check stock with IF (SELECT quantity FROM products WHERE product_id = from_id) < qty THEN RAISE",
+      "Use UPDATE for both products inside a single transaction"
+    ]
+  },
+  "07_plpgsql/01_basic_function": {
+    "title": "Basic PL/pgSQL Function",
+    "difficulty": "hard",
+    "description": "Create a PL/pgSQL function called 'total_orders_for_customer(p_customer_id INT)' that returns the total number of orders for a given customer. Then call it with customer_id = 1.",
+    "hints": [
+      "Use CREATE OR REPLACE FUNCTION",
+      "Function returns INTEGER",
+      "Use LANGUAGE plpgsql",
+      "Use SELECT COUNT(*) INTO result FROM orders WHERE customer_id = p_customer_id"
+    ]
+  },
+  "02_joins/05_anti_join": {
+    "title": "Anti-Join",
+    "difficulty": "medium",
+    "description": "Find customers who have NEVER placed an order. Use three different techniques: LEFT JOIN + IS NULL, NOT IN, and NOT EXISTS. Results should be the same.",
+    "hints": [
+      "Technique 1: LEFT JOIN orders ON ... WHERE order_id IS NULL",
+      "Technique 2: WHERE customer_id NOT IN (SELECT customer_id FROM orders WHERE customer_id IS NOT NULL)",
+      "Technique 3: WHERE NOT EXISTS (SELECT 1 FROM orders WHERE orders.customer_id = customers.customer_id)"
+    ]
+  },
+  "02_joins/04_multi_join": {
+    "title": "Multi-Table JOIN",
+    "difficulty": "medium",
+    "description": "Show each order with the product name, quantity, the customer who placed it, and the salesperson who handled it.",
+    "hints": [
+      "Join orders -> customers, orders -> order_items, order_items -> products, orders -> salesperson",
+      "Use meaningful table aliases (o, c, oi, p, s)",
+      "You'll need 4 tables joined together"
+    ]
+  },
+  "02_joins/03_self_join": {
+    "title": "Self JOIN",
+    "difficulty": "medium",
+    "description": "Find pairs of employees who work in the same department. Show each pair once (e.g. 'Alice Johnson' and 'Bob Smith' but not the reverse). Exclude pairing an employee with themself.",
+    "hints": [
+      "Join the employees table to itself",
+      "Use aliases e1 and e2",
+      "Condition: e1.department = e2.department AND e1.employee_id < e2.employee_id",
+      "The < avoids duplicates and self-pairings"
+    ]
+  },
+  "02_joins/01_inner_join": {
+    "title": "INNER JOIN",
+    "difficulty": "easy",
+    "description": "List each order with the customer's full name and email. Only include orders that belong to existing customers.",
+    "hints": [
+      "Use INNER JOIN customers ON orders.customer_id = customers.customer_id",
+      "Use CONCAT(first_name, ' ', last_name) or || for full name",
+      "SELECT order_id, full_name, email, total"
+    ]
+  },
+  "02_joins/02_left_right_join": {
+    "title": "LEFT and RIGHT JOIN",
+    "difficulty": "easy",
+    "description": "Show all customers and their orders, including customers who have never placed an order. Include customer name and total (NULL if no orders).",
+    "hints": [
+      "Use LEFT JOIN to keep all customers",
+      "LEFT JOIN orders ON customers.customer_id = orders.customer_id",
+      "Orders without customers will show NULL values"
+    ]
+  },
+  "04_subqueries/02_derived_table": {
+    "title": "Derived Table (Subquery in FROM)",
+    "difficulty": "medium",
+    "description": "Find the top 3 highest-paid employees per department. Use a derived table with ROW_NUMBER() to rank employees within each department.",
+    "hints": [
+      "First create a derived table with ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC)",
+      "Then in the outer query, filter WHERE rn <= 3",
+      "The derived table goes in the FROM clause as a subquery"
+    ]
+  },
+  "04_subqueries/03_exists_in": {
+    "title": "Subqueries with EXISTS / IN",
+    "difficulty": "medium",
+    "description": "Find all customers who have placed an order with a total greater than $200. Use both IN and EXISTS approaches (separate queries, but for verification just provide one).",
+    "hints": [
+      "IN: WHERE customer_id IN (SELECT customer_id FROM orders WHERE total > 200)",
+      "EXISTS: WHERE EXISTS (SELECT 1 FROM orders WHERE customer_id = c.customer_id AND total > 200)",
+      "EXISTS is usually faster for large datasets"
+    ]
+  },
+  "04_subqueries/04_cte": {
+    "title": "Common Table Expressions (CTE)",
+    "difficulty": "medium",
+    "description": "Using WITH (CTE), write a query that finds the top 2 products by total revenue (quantity * price) for each category. Use a CTE to compute product revenue, then ROW_NUMBER to rank within categories.",
+    "hints": [
+      "Start with WITH product_revenue AS (SELECT ...)",
+      "Compute quantity * price as revenue, join order_items with products",
+      "Then use a second CTE or subquery for ROW_NUMBER() OVER (PARTITION BY category ...)"
+    ]
+  },
+  "04_subqueries/05_correlated": {
+    "title": "Correlated Subqueries",
+    "difficulty": "hard",
+    "description": "Find employees who earn more than the average salary of their department. Show employee name, department, their salary, and the department average. Order by salary descending.",
+    "hints": [
+      "A correlated subquery references the outer query's table",
+      "SELECT AVG(salary) FROM employees e2 WHERE e2.department = e1.department",
+      "Use this subquery in the WHERE clause: salary > (subquery)",
+      "Also include it in SELECT to show the department average"
+    ]
+  },
+  "04_subqueries/01_scalar_subquery": {
+    "title": "Scalar Subquery",
+    "difficulty": "medium",
+    "description": "Show each employee's name, salary, and how their salary compares to the department average. Include columns: name, department, salary, dept_avg_salary, and salary_diff (salary - dept_avg).",
+    "hints": [
+      "Use a correlated scalar subquery in SELECT to compute AVG(salary) for the employee's department",
+      "The subquery needs a WHERE clause matching the department",
+      "Salary diff can be computed as salary - subquery_result"
+    ]
+  },
+  "04_subqueries/00_address_cte": {
+    "title": "Query addresses",
+    "difficulty": "medium",
+    "description": "The orders table has been pre-loaded with 10 records. Add street, city, state, zip_code columns. Then use a CTE with address data to populate: order 3 gets '123 Main Street, Springfield , CA, 12345', order 4 gets '234 Elm Avenue, lexington, ky, 23456', and so on for orders 6-10. Note the inconsistent formatting (extra spaces, mixed case, zip+4).",
+    "hints": [
+      "ALTER TABLE to add all four address columns",
+      "Use WITH address_data AS (VALUES ...) CTE",
+      "UPDATE orders FROM address_data to populate the new columns"
+    ]
+  }
+}

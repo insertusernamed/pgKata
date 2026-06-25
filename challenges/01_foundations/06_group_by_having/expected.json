@@ -1,0 +1,6 @@
+{
+    "columns": ["department", "headcount", "total_salary"],
+    "rows": [
+        ["Engineering", "4", "360000.00"]
+    ]
+}

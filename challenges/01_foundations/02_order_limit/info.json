@@ -1,0 +1,10 @@
+{
+    "title": "ORDER BY and LIMIT",
+    "difficulty": "easy",
+    "description": "List the top 3 most expensive products by price, from highest to lowest.",
+    "hints": [
+        "Use ORDER BY price DESC",
+        "Add LIMIT 3 to get only the top 3",
+        "SELECT product_name and price"
+    ]
+}

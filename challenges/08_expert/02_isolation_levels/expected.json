@@ -1,0 +1,6 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT balance FROM accounts WHERE account_id = 1", "expected": [["5000.00"]]}
+    ]
+}

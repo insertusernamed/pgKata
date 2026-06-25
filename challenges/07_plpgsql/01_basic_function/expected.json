@@ -1,0 +1,7 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT total_orders_for_customer(1)", "expected": [["3"]]},
+        {"query": "SELECT total_orders_for_customer(2)", "expected": [["1"]]}
+    ]
+}

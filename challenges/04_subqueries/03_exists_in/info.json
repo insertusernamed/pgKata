@@ -1,0 +1,10 @@
+{
+    "title": "Subqueries with EXISTS / IN",
+    "difficulty": "medium",
+    "description": "Find all customers who have placed an order with a total greater than $200. Use both IN and EXISTS approaches (separate queries, but for verification just provide one).",
+    "hints": [
+        "IN: WHERE customer_id IN (SELECT customer_id FROM orders WHERE total > 200)",
+        "EXISTS: WHERE EXISTS (SELECT 1 FROM orders WHERE customer_id = c.customer_id AND total > 200)",
+        "EXISTS is usually faster for large datasets"
+    ]
+}

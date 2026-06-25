@@ -1,0 +1,10 @@
+{
+    "title": "Common Table Expressions (CTE)",
+    "difficulty": "medium",
+    "description": "Using WITH (CTE), write a query that finds the top 2 products by total revenue (quantity * price) for each category. Use a CTE to compute product revenue, then ROW_NUMBER to rank within categories.",
+    "hints": [
+        "Start with WITH product_revenue AS (SELECT ...)",
+        "Compute quantity * price as revenue, join order_items with products",
+        "Then use a second CTE or subquery for ROW_NUMBER() OVER (PARTITION BY category ...)"
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "title": "Stored Procedure",
+    "difficulty": "hard",
+    "description": "Create a stored procedure 'transfer_product_stock(from_product_id INT, to_product_id INT, qty INT)' that transfers stock between products. It should decrement quantity from the source and increment on the destination, and raise an exception if insufficient stock.",
+    "hints": [
+        "Use CREATE OR REPLACE PROCEDURE (not FUNCTION)",
+        "Use LANGUAGE plpgsql",
+        "Check stock with IF (SELECT quantity FROM products WHERE product_id = from_id) < qty THEN RAISE",
+        "Use UPDATE for both products inside a single transaction"
+    ]
+}

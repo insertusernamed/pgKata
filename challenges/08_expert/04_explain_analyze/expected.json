@@ -1,0 +1,6 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM pg_indexes WHERE tablename='orders' AND indexname='idx_orders_customer'", "expected": [["1"]]}
+    ]
+}

@@ -1,0 +1,6 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT department, employee_count::int, total_salary::numeric FROM get_department_summary() ORDER BY department", "expected": [["Engineering", "3", "255000.00"], ["Marketing", "2", "137000.00"], ["Sales", "2", "99000.00"]]}
+    ]
+}

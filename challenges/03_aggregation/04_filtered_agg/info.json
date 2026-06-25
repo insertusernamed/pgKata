@@ -1,0 +1,10 @@
+{
+    "title": "Filtered Aggregates",
+    "difficulty": "medium",
+    "description": "For each month in 2024, show total sales, and break out sales by region (North, South, East, West) in separate columns using FILTER.",
+    "hints": [
+        "Use FILTER (WHERE region = 'North') inside each aggregate",
+        "DATE_TRUNC('month', sale_date) for month grouping",
+        "Example: SUM(amount) FILTER (WHERE region = 'North') AS north_sales"
+    ]
+}

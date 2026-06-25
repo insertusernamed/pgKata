@@ -1,0 +1,13 @@
+{
+    "columns": ["department", "name", "salary", "rank", "dense_rank"],
+    "rows": [
+        ["Engineering", "Alice", "95000.00", "1", "1"],
+        ["Engineering", "Bob", "95000.00", "1", "1"],
+        ["Engineering", "Charlie", "88000.00", "3", "2"],
+        ["Engineering", "Diana", "72000.00", "4", "3"],
+        ["Marketing", "Edward", "72000.00", "1", "1"],
+        ["Marketing", "Fiona", "65000.00", "2", "2"],
+        ["Marketing", "George", "65000.00", "2", "2"],
+        ["Marketing", "Hannah", "61000.00", "4", "3"]
+    ]
+}

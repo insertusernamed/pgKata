@@ -1,0 +1,8 @@
+{
+    "columns": ["product_name", "price"],
+    "rows": [
+        ["Ergonomic Chair", "899.99"],
+        ["Standing Desk", "599.99"],
+        ["Noise Canceling Headphones", "349.99"]
+    ]
+}

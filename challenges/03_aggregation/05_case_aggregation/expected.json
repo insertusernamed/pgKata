@@ -1,0 +1,8 @@
+{
+    "columns": ["course", "a_count", "b_count", "c_count", "d_count", "f_count"],
+    "rows": [
+        ["Database Design", "1", "1", "1", "0", "1"],
+        ["Data Structures", "2", "2", "1", "0", "0"],
+        ["Web Development", "1", "1", "1", "1", "1"]
+    ]
+}

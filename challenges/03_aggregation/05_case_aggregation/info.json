@@ -1,0 +1,10 @@
+{
+    "title": "Conditional Aggregation with CASE",
+    "difficulty": "medium",
+    "description": "Create a summary showing how many students got each letter grade (A: >=90, B: >=80, C: >=70, D: >=60, F: <60) for each course. Show course name and count per grade.",
+    "hints": [
+        "Use CASE inside COUNT() for each grade bucket",
+        "CASE WHEN score >= 90 THEN 1 END counts A's",
+        "GROUP BY course_id, course_name"
+    ]
+}

@@ -1,0 +1,8 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM pg_roles WHERE rolname = 'readonly_user'", "expected": [["1"]]},
+        {"query": "SELECT has_table_privilege('readonly_user', 'customers', 'SELECT')", "expected": [["True"]]},
+        {"query": "SELECT has_table_privilege('readonly_user', 'customers', 'INSERT')", "expected": [["False"]]}
+    ]
+}

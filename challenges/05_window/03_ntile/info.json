@@ -1,0 +1,10 @@
+{
+    "title": "NTILE",
+    "difficulty": "medium",
+    "description": "Divide employees into 4 quartiles based on salary across the whole company. Show name, salary, and which quartile they fall into (1 = highest, 4 = lowest).",
+    "hints": [
+        "NTILE(4) divides the ordered rows into 4 buckets",
+        "ORDER BY salary DESC so quartile 1 has highest salaries",
+        "No PARTITION BY needed — this is company-wide"
+    ]
+}

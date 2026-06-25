@@ -1,0 +1,10 @@
+{
+    "title": "Department Top Three Salaries",
+    "difficulty": "hard",
+    "description": "Find employees who earn the top three salaries in each department. If fewer than 3 employees in a department, return them all. Show department, employee name, and salary.",
+    "hints": [
+        "Use DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC)",
+        "DENSE_RANK handles ties correctly (ties share the same rank)",
+        "Filter WHERE rank <= 3 in an outer query"
+    ]
+}

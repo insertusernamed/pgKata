@@ -1,0 +1,10 @@
+{
+    "title": "Multi-Table JOIN",
+    "difficulty": "medium",
+    "description": "Show each order with the product name, quantity, the customer who placed it, and the salesperson who handled it.",
+    "hints": [
+        "Join orders -> customers, orders -> order_items, order_items -> products, orders -> salesperson",
+        "Use meaningful table aliases (o, c, oi, p, s)",
+        "You'll need 4 tables joined together"
+    ]
+}

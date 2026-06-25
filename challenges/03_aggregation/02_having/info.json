@@ -1,0 +1,10 @@
+{
+    "title": "HAVING Clause",
+    "difficulty": "easy",
+    "description": "Find departments where the average salary is above $60,000 and there are at least 3 employees.",
+    "hints": [
+        "GROUP BY department",
+        "HAVING AVG(salary) > 60000 AND COUNT(*) >= 3",
+        "AVG(salary) filters groups after aggregation"
+    ]
+}

@@ -1,0 +1,8 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM information_schema.tables WHERE table_name='customers'", "expected": [["1"]]},
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='customers' AND column_name IN ('customer_id','firstname','lastname','username','password','email','created_on')", "expected": [["7"]]},
+        {"query": "SELECT column_name FROM information_schema.columns WHERE table_name='customers' AND column_name = 'password'", "expected": [["password"]]}
+    ]
+}

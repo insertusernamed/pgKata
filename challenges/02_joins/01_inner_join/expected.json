@@ -1,0 +1,10 @@
+{
+    "columns": ["order_id", "customer_name", "email", "total"],
+    "rows": [
+        ["1", "Alice Johnson", "alice@example.com", "150.00"],
+        ["2", "Bob Smith", "bob@example.com", "275.50"],
+        ["3", "Alice Johnson", "alice@example.com", "89.99"],
+        ["4", "Charlie Brown", "charlie@example.com", "450.00"],
+        ["5", "Bob Smith", "bob@example.com", "120.00"]
+    ]
+}

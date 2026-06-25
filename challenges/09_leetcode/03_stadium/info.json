@@ -1,0 +1,10 @@
+{
+    "title": "Human Traffic of Stadium",
+    "difficulty": "hard",
+    "description": "Find records where there are 3 or more consecutive rows with `people >= 100`. Show visit_date and people for those rows.",
+    "hints": [
+        "Use LAG and LEAD to compare consecutive rows",
+        "A row is part of a consecutive group if it OR its neighbors have people >= 100 in a chain of 3",
+        "Alternative: subtract row_number from some grouping value to form groups"
+    ]
+}

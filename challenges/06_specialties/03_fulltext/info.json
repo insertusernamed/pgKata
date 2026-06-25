@@ -1,0 +1,11 @@
+{
+    "title": "Full-Text Search",
+    "difficulty": "hard",
+    "description": "Implement full-text search on a blog_posts table. Find posts that match the query 'database performance tuning' using tsvector and tsquery. Show title, rank, and a highlighted snippet.",
+    "hints": [
+        "Use to_tsvector('english', title || ' ' || body) to create the search vector",
+        "Use plainto_tsquery('english', 'database performance tuning') for the query",
+        "Use ts_rank() to order by relevance",
+        "Use ts_headline() to show highlighted matches"
+    ]
+}

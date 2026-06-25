@@ -1,0 +1,10 @@
+{
+    "title": "INNER JOIN",
+    "difficulty": "easy",
+    "description": "List each order with the customer's full name and email. Only include orders that belong to existing customers.",
+    "hints": [
+        "Use INNER JOIN customers ON orders.customer_id = customers.customer_id",
+        "Use CONCAT(first_name, ' ', last_name) or || for full name",
+        "SELECT order_id, full_name, email, total"
+    ]
+}

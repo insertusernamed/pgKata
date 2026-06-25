@@ -1,0 +1,10 @@
+{
+    "title": "RANK and DENSE_RANK",
+    "difficulty": "medium",
+    "description": "Rank employees by salary within each department. Show RANK and DENSE_RANK side by side so you can see the difference when salaries tie.",
+    "hints": [
+        "RANK() leaves gaps after ties (1,1,3,4)",
+        "DENSE_RANK() does not leave gaps (1,1,2,3)",
+        "Add a tie by making two employees have the same salary in one department"
+    ]
+}

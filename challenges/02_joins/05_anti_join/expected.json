@@ -1,0 +1,8 @@
+{
+    "columns": ["customer_id", "first_name", "last_name", "email"],
+    "rows": [
+        ["4", "Diana", "Lee", "diana@example.com"],
+        ["5", "Edward", "Wilson", "edward@example.com"],
+        ["6", "Fiona", "Davis", "fiona@example.com"]
+    ]
+}

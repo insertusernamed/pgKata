@@ -1,0 +1,8 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM bookmarks", "expected": [[5]]},
+        {"query": "SELECT COUNT(DISTINCT url) FROM bookmarks", "expected": [[4]]},
+        {"query": "SELECT COUNT(*) FROM bookmarks WHERE url = 'https://www.postgresql.org'", "expected": [[2]]}
+    ]
+}

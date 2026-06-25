@@ -1,0 +1,1 @@
+{"title": "Creating a new read-only user", "difficulty": "medium", "description": "Create a new database user named 'readonly_user' with a password, then grant them SELECT-only access on the customers table.", "hints": ["Use CREATE USER ... WITH PASSWORD", "GRANT SELECT ON customers TO readonly_user", "The user can read but not modify data"]}

@@ -1,0 +1,7 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM users", "expected": [[11]]},
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='users' AND column_name='password'", "expected": [[1]]}
+    ]
+}

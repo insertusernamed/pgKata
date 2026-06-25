@@ -1,0 +1,7 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "UPDATE employees SET salary = 100000.00 WHERE employee_id = 1; SELECT COUNT(*) FROM salary_audit WHERE employee_id = 1", "expected": [["1"]]},
+        {"query": "SELECT old_salary::numeric, new_salary::numeric FROM salary_audit WHERE employee_id = 1", "expected": [["95000.00", "100000.00"]]}
+    ]
+}

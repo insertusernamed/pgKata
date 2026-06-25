@@ -1,0 +1,9 @@
+{
+    "columns": ["customer_id", "first_name", "last_name"],
+    "rows": [
+        ["1", "Alice", "Johnson"],
+        ["2", "Bob", "Smith"],
+        ["3", "Charlie", "Brown"],
+        ["4", "Diana", "Lee"]
+    ]
+}

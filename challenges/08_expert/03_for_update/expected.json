@@ -1,0 +1,6 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT job_id, job_type, status FROM jobs WHERE status = 'in_progress' ORDER BY job_id LIMIT 1", "expected": [["1", "email", "in_progress"]]}
+    ]
+}

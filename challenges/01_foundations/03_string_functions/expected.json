@@ -1,0 +1,10 @@
+{
+    "columns": ["upper_username", "lower_email", "bio_length"],
+    "rows": [
+        ["ALICE_WONDER", "alice.wonder@example.com", "42"],
+        ["BOB_BUILDER", "bob.builder@example.com", "36"],
+        ["CHARLIE_CHAPLIN", "charlie.chaplin@example.com", null],
+        ["DIANA_PRINCE", "diana.prince@example.org", "40"],
+        ["EVE_ADAMS", "eve.adams@example.net", "49"]
+    ]
+}

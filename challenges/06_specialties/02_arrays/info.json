@@ -1,0 +1,10 @@
+{
+    "title": "Array Operations",
+    "difficulty": "medium",
+    "description": "Work with PostgreSQL arrays. Find all employees who have 'Python' in their skills array, show their name, and the total number of skills they have.",
+    "hints": [
+        "Use ANY() or @> to check array containment",
+        "Use array_length(skills, 1) for count of skills",
+        "Use ARRAY['Python', 'SQL']::varchar[] or '{Python,SQL}'::varchar[] syntax"
+    ]
+}

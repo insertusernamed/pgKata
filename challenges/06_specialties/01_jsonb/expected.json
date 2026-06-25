@@ -1,0 +1,11 @@
+{
+    "columns": ["product_name", "price", "color", "material", "in_stock"],
+    "rows": [
+        ["Red T-shirt", "29.99", "red", "cotton", "true"],
+        ["Blue Jeans", "79.99", "blue", "denim", "true"],
+        ["Green Jacket", "149.99", "green", "polyester", "false"],
+        ["Wireless Mouse", "49.99", "black", null, "true"],
+        ["Desk Lamp", "39.99", "white", null, "true"],
+        ["Running Shoes", "129.99", "black", "mesh", "true"]
+    ]
+}

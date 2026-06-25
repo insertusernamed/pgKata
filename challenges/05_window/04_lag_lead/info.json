@@ -1,0 +1,10 @@
+{
+    "title": "LAG and LEAD",
+    "difficulty": "medium",
+    "description": "For each employee, show their salary alongside the previous employee's salary (by hire date) and the next employee's salary. Also show the difference from the previous salary.",
+    "hints": [
+        "LAG(salary) OVER (ORDER BY hire_date) gets previous row's salary",
+        "LEAD(salary) OVER (ORDER BY hire_date) gets next row's salary",
+        "LAG(salary, 1, 0) uses 0 as default when there's no previous row"
+    ]
+}

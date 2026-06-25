@@ -1,0 +1,7 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "CALL transfer_product_stock(1, 2, 30); SELECT quantity FROM products WHERE product_id = 1", "expected": [["70"]]},
+        {"query": "SELECT quantity FROM products WHERE product_id = 2", "expected": [["80"]]}
+    ]
+}

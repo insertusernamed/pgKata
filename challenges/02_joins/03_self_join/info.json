@@ -1,0 +1,11 @@
+{
+    "title": "Self JOIN",
+    "difficulty": "medium",
+    "description": "Find pairs of employees who work in the same department. Show each pair once (e.g. 'Alice Johnson' and 'Bob Smith' but not the reverse). Exclude pairing an employee with themself.",
+    "hints": [
+        "Join the employees table to itself",
+        "Use aliases e1 and e2",
+        "Condition: e1.department = e2.department AND e1.employee_id < e2.employee_id",
+        "The < avoids duplicates and self-pairings"
+    ]
+}

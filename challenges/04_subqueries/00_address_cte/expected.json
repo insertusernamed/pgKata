@@ -1,0 +1,12 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='orders' AND column_name='street'", "expected": [[1]]},
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='orders' AND column_name='city'", "expected": [[1]]},
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='orders' AND column_name='state'", "expected": [[1]]},
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='orders' AND column_name='zip_code'", "expected": [[1]]},
+        {"query": "SELECT COUNT(*) FROM orders WHERE street IS NOT NULL", "expected": [[7]]},
+        {"query": "SELECT city FROM orders WHERE order_id = 4", "expected": [["lexington"]]},
+        {"query": "SELECT state FROM orders WHERE order_id = 10", "expected": [["CO"]]}
+    ]
+}

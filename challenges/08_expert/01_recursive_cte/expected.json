@@ -1,0 +1,16 @@
+{
+    "columns": ["employee_id", "name", "level", "path"],
+    "rows": [
+        ["1", "CEO", "0", "CEO"],
+        ["2", "VP Engineering", "1", "CEO -> VP Engineering"],
+        ["3", "VP Marketing", "1", "CEO -> VP Marketing"],
+        ["4", "VP Sales", "1", "CEO -> VP Sales"],
+        ["5", "Engineering Director", "2", "CEO -> VP Engineering -> Engineering Director"],
+        ["8", "Marketing Manager", "2", "CEO -> VP Marketing -> Marketing Manager"],
+        ["10", "Sales Manager", "2", "CEO -> VP Sales -> Sales Manager"],
+        ["6", "Senior Developer", "3", "CEO -> VP Engineering -> Engineering Director -> Senior Developer"],
+        ["9", "Marketing Specialist", "3", "CEO -> VP Marketing -> Marketing Manager -> Marketing Specialist"],
+        ["11", "Sales Rep", "3", "CEO -> VP Sales -> Sales Manager -> Sales Rep"],
+        ["7", "Junior Developer", "4", "CEO -> VP Engineering -> Engineering Director -> Senior Developer -> Junior Developer"]
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "title": "Tree Traversal with Recursive CTE",
+    "difficulty": "expert",
+    "description": "Given a 'nodes' table where each node has a parent_id (NULL for root), classify each node as 'Root' (no parent), 'Inner' (has both parent and children), or 'Leaf' (has parent but no children).",
+    "hints": [
+        "Use a recursive CTE to find all ancestors/descendants",
+        "Or use simpler approach with subqueries: check p_id IS NULL for Root",
+        "Check EXISTS (SELECT 1 FROM nodes WHERE parent_id = n.id) for Inner vs Leaf"
+    ]
+}

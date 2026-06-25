@@ -1,0 +1,1 @@
+{"title": "Altering database records", "difficulty": "easy", "description": "Add a phone_number column to the customers table.", "hints": ["Use ALTER TABLE customers ADD COLUMN", "The column needs a name and data type", "Use VARCHAR(20) for phone numbers"]}

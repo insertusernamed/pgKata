@@ -1,0 +1,10 @@
+{
+    "title": "EXPLAIN ANALYZE",
+    "difficulty": "hard",
+    "description": "First create an index on the orders(customer_id) column. Then run EXPLAIN ANALYZE on a query that joins customers with orders. The output should show an Index Scan being used.",
+    "hints": [
+        "CREATE INDEX idx_orders_customer ON orders(customer_id)",
+        "EXPLAIN ANALYZE SELECT ... JOIN orders ON customer_id ...",
+        "The plan should show 'Index Scan' or 'Bitmap Index Scan' using the created index"
+    ]
+}

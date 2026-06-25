@@ -1,0 +1,11 @@
+{
+    "title": "Row-Level Security",
+    "difficulty": "expert",
+    "description": "Implement Row-Level Security (RLS) on the 'documents' table. Each user should only see their own documents. Enable RLS, create a policy, and query as a specific user.",
+    "hints": [
+        "ALTER TABLE documents ENABLE ROW LEVEL SECURITY",
+        "CREATE POLICY user_documents ON documents USING (owner = current_user)",
+        "Create a test user and grant SELECT on the table",
+        "SET ROLE test_user; SELECT * FROM documents; RESET ROLE;"
+    ]
+}

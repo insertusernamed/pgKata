@@ -1,0 +1,11 @@
+{
+    "title": "Basic PL/pgSQL Function",
+    "difficulty": "hard",
+    "description": "Create a PL/pgSQL function called 'total_orders_for_customer(p_customer_id INT)' that returns the total number of orders for a given customer. Then call it with customer_id = 1.",
+    "hints": [
+        "Use CREATE OR REPLACE FUNCTION",
+        "Function returns INTEGER",
+        "Use LANGUAGE plpgsql",
+        "Use SELECT COUNT(*) INTO result FROM orders WHERE customer_id = p_customer_id"
+    ]
+}

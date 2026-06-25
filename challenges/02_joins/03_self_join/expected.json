@@ -1,0 +1,12 @@
+{
+    "columns": ["employee_1", "employee_2", "department"],
+    "rows": [
+        ["Alice Johnson", "Bob Smith", "Engineering"],
+        ["Alice Johnson", "Charlie Brown", "Engineering"],
+        ["Bob Smith", "Charlie Brown", "Engineering"],
+        ["Diana Lee", "Edward Wilson", "Marketing"],
+        ["Fiona Davis", "George Martinez", "Sales"],
+        ["Fiona Davis", "Hannah Taylor", "Sales"],
+        ["George Martinez", "Hannah Taylor", "Sales"]
+    ]
+}

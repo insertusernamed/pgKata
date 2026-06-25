@@ -1,0 +1,10 @@
+{
+    "title": "Set-Returning Function",
+    "difficulty": "hard",
+    "description": "Create a function 'get_department_summary()' that returns a table with department, employee_count, total_salary, and avg_salary for each department.",
+    "hints": [
+        "Use RETURNS TABLE(department VARCHAR, employee_count BIGINT, ...)",
+        "RETURN QUERY SELECT department, COUNT(*), SUM(salary), AVG(salary) GROUP BY department",
+        "Call the function with SELECT * FROM get_department_summary()"
+    ]
+}

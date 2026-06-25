@@ -1,0 +1,6 @@
+{
+    "columns": ["department", "avg_salary", "employee_count"],
+    "rows": [
+        ["Engineering", "87600.00", "5"]
+    ]
+}

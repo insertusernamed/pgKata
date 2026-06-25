@@ -1,0 +1,7 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM customers", "expected": [["3"]]},
+        {"query": "SELECT COUNT(*) FROM customers WHERE lastname = 'Smith'", "expected": [["0"]]}
+    ]
+}

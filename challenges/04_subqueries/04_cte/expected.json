@@ -1,0 +1,9 @@
+{
+    "columns": ["category", "product_name", "total_revenue"],
+    "rows": [
+        ["Clothing", "Jacket", "599.96"],
+        ["Clothing", "Jeans", "479.94"],
+        ["Electronics", "Smartphone", "4499.95"],
+        ["Electronics", "Laptop", "3899.97"]
+    ]
+}

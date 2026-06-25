@@ -1,0 +1,10 @@
+{
+    "title": "Window Frames and Running Totals",
+    "difficulty": "hard",
+    "description": "Calculate a running total of sales per month, plus a 3-month moving average. Show month, monthly_sales, running_total, and moving_avg_3mo.",
+    "hints": [
+        "For running total: SUM(amount) OVER (ORDER BY month ROWS UNBOUNDED PRECEDING)",
+        "For 3-month moving average: AVG(amount) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)",
+        "Use DATE_TRUNC('month', sale_date) for monthly aggregation first"
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "title": "Transaction Isolation Levels",
+    "difficulty": "hard",
+    "description": "Demonstrate the difference between READ COMMITTED and REPEATABLE READ isolation levels. The query should return the current balance from the accounts table using SERIALIZABLE isolation.",
+    "hints": [
+        "Use BEGIN ISOLATION LEVEL SERIALIZABLE;",
+        "SELECT balance FROM accounts WHERE account_id = 1;",
+        "Then COMMIT;",
+        "Different isolation levels affect what dirty reads, non-repeatable reads, and phantom reads are possible"
+    ]
+}

@@ -1,0 +1,6 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='customers' AND column_name='phone_number'", "expected": [["1"]]}
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "title": "Consecutive Numbers",
+    "difficulty": "hard",
+    "description": "Find all numbers that appear at least 3 times consecutively in the Logs table. Use the LAG and LEAD window functions.",
+    "hints": [
+        "Use LAG(num, 1) and LAG(num, 2) to look back at previous rows",
+        "Filter WHERE num = LAG(num, 1) OVER (ORDER BY id) AND num = LAG(num, 2) OVER (ORDER BY id)",
+        "SELECT DISTINCT num to avoid duplicates"
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "title": "JSONB Operations",
+    "difficulty": "medium",
+    "description": "Query a table with JSONB data. Find all products where the metadata contains a color field, and extract specific fields from the JSONB into separate columns.",
+    "hints": [
+        "Use -> to get JSONB field as JSON, ->> to get as text",
+        "Use @> containment operator or ? key-existence operator",
+        "Example: metadata @> '{\"color\": \"red\"}'::jsonb",
+        "Project: metadata->>'color' AS color"
+    ]
+}

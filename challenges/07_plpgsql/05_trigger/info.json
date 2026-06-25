@@ -1,0 +1,10 @@
+{
+    "title": "Triggers",
+    "difficulty": "hard",
+    "description": "Create an audit trigger that logs all changes to the 'employees' table. When salary is updated, insert a record into 'salary_audit' with the old and new salary.",
+    "hints": [
+        "Create salary_audit table first (audit_id, employee_id, old_salary, new_salary, changed_at)",
+        "Create a trigger function that uses OLD and NEW to access old/new values",
+        "CREATE TRIGGER AFTER UPDATE OF salary ON employees FOR EACH ROW EXECUTE FUNCTION ..."
+    ]
+}

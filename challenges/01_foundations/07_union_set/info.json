@@ -1,0 +1,11 @@
+{
+    "title": "Set Operations (UNION, INTERSECT, EXCEPT)",
+    "difficulty": "medium",
+    "description": "You have two tables: active_users and archived_users. Find all email addresses that appear in BOTH tables (INTERSECT), and also find emails that are in active_users but NOT in archived_users (EXCEPT).",
+    "hints": [
+        "Use INTERSECT to find common emails",
+        "Use EXCEPT to find emails only in active",
+        "Both SELECT statements must return the same number of columns",
+        "No need for ORDER BY"
+    ]
+}

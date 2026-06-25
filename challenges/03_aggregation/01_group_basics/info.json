@@ -1,0 +1,10 @@
+{
+    "title": "GROUP BY Basics",
+    "difficulty": "easy",
+    "description": "For each product category, find the total stock, average price, cheapest product price, and most expensive product price.",
+    "hints": [
+        "GROUP BY category",
+        "SUM(stock), AVG(price), MIN(price), MAX(price)",
+        "ROUND(AVG(price), 2) for clean decimals"
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "columns": ["order_id", "customer", "salesperson", "product", "qty"],
+    "rows": [
+        ["1", "Alice Johnson", "Carol Williams", "Widget", "5"],
+        ["1", "Alice Johnson", "Carol Williams", "Gadget", "2"],
+        ["2", "Bob Smith", "David Brown", "Doohickey", "1"],
+        ["3", "Alice Johnson", "David Brown", "Widget", "3"],
+        ["3", "Alice Johnson", "David Brown", "Gadget", "4"]
+    ]
+}

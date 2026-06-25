@@ -1,0 +1,1 @@
+{"title": "CREATE bookmarks table & find duplicates", "difficulty": "medium", "description": "Create a bookmarks table, insert data including intentional duplicates, then identify them.", "hints": ["CREATE TABLE with id SERIAL PRIMARY KEY, url, name, description", "Some URLs appear more than once in the INSERT", "Use GROUP BY with COUNT to find the duplicate URL"]}

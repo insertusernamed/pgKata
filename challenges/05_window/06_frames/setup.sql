@@ -1,0 +1,21 @@
+DROP TABLE IF EXISTS sales CASCADE;
+
+CREATE TABLE sales (
+    sale_id SERIAL PRIMARY KEY,
+    sale_date DATE NOT NULL,
+    amount NUMERIC(10,2) NOT NULL
+);
+
+INSERT INTO sales (sale_date, amount) VALUES
+('2024-01-10', 1000.00),
+('2024-01-20', 1500.00),
+('2024-02-05', 2000.00),
+('2024-02-15', 1200.00),
+('2024-03-01', 1800.00),
+('2024-03-20', 900.00),
+('2024-04-10', 2500.00),
+('2024-04-25', 1100.00),
+('2024-05-05', 1600.00),
+('2024-05-20', 1400.00),
+('2024-06-01', 3000.00),
+('2024-06-15', 2200.00);

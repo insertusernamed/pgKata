@@ -1,0 +1,10 @@
+{
+    "title": "Scalar Subquery",
+    "difficulty": "medium",
+    "description": "Show each employee's name, salary, and how their salary compares to the department average. Include columns: name, department, salary, dept_avg_salary, and salary_diff (salary - dept_avg).",
+    "hints": [
+        "Use a correlated scalar subquery in SELECT to compute AVG(salary) for the employee's department",
+        "The subquery needs a WHERE clause matching the department",
+        "Salary diff can be computed as salary - subquery_result"
+    ]
+}

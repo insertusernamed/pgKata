@@ -1,0 +1,9 @@
+{
+    "mode": "state",
+    "checks": [
+        {"query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='customers' AND column_name='phone_number'", "expected": [[1]]},
+        {"query": "SELECT COUNT(*) FROM customers WHERE phone_number IS NOT NULL", "expected": [[4]]},
+        {"query": "SELECT phone_number FROM customers WHERE customer_id = 5", "expected": [["1234567890"]]},
+        {"query": "SELECT phone_number FROM customers WHERE customer_id = 7", "expected": [["(987)654-3210"]]}
+    ]
+}

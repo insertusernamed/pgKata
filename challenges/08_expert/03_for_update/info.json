@@ -1,0 +1,12 @@
+{
+    "title": "FOR UPDATE and SKIP LOCKED",
+    "difficulty": "hard",
+    "description": "Select the next available (unlocked) job from a queue using SKIP LOCKED. Mark it as 'in_progress' by updating its status, and return the job details.",
+    "hints": [
+        "BEGIN the transaction first",
+        "SELECT ... FROM jobs WHERE status = 'pending' ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1",
+        "UPDATE jobs SET status = 'in_progress' WHERE job_id = ...",
+        "Then COMMIT",
+        "SKIP LOCKED skips rows locked by other transactions"
+    ]
+}

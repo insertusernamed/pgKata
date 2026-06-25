@@ -1,0 +1,13 @@
+{
+    "columns": ["id", "type"],
+    "rows": [
+        ["1", "Root"],
+        ["2", "Inner"],
+        ["3", "Inner"],
+        ["4", "Inner"],
+        ["5", "Leaf"],
+        ["6", "Leaf"],
+        ["7", "Inner"],
+        ["8", "Leaf"]
+    ]
+}

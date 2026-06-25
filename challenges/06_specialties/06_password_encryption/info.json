@@ -1,0 +1,1 @@
+{"title": "Encrypt passwords in users table", "difficulty": "medium", "description": "Create a users table with plain-text passwords and explore encryption with pgcrypto.", "hints": ["CREATE TABLE users with user_id, username, password", "Enable the pgcrypto extension with CREATE EXTENSION", "Use crypt() and gen_salt() to hash passwords"]}

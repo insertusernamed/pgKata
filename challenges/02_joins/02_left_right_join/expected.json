@@ -1,0 +1,10 @@
+{
+    "columns": ["customer_name", "total"],
+    "rows": [
+        ["Alice Johnson", "150.00"],
+        ["Alice Johnson", "89.99"],
+        ["Bob Smith", "275.50"],
+        ["Charlie Brown", "450.00"],
+        ["Diana Lee", null]
+    ]
+}

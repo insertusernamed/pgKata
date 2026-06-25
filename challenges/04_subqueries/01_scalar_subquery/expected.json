@@ -1,0 +1,13 @@
+{
+    "columns": ["name", "department", "salary", "dept_avg_salary", "salary_diff"],
+    "rows": [
+        ["Alice Johnson", "Engineering", "95000.00", "85000.00", "10000.00"],
+        ["Bob Smith", "Engineering", "72000.00", "85000.00", "-13000.00"],
+        ["Charlie Brown", "Engineering", "88000.00", "85000.00", "3000.00"],
+        ["Diana Lee", "Marketing", "65000.00", "64000.00", "1000.00"],
+        ["Edward Wilson", "Marketing", "72000.00", "64000.00", "8000.00"],
+        ["Fiona Davis", "Marketing", "55000.00", "64000.00", "-9000.00"],
+        ["George Martinez", "Sales", "48000.00", "50000.00", "-2000.00"],
+        ["Hannah Taylor", "Sales", "52000.00", "50000.00", "2000.00"]
+    ]
+}

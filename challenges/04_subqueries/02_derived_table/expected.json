@@ -1,0 +1,14 @@
+{
+    "columns": ["department", "employee", "salary", "rank"],
+    "rows": [
+        ["Engineering", "Diana Lee", "105000.00", "1"],
+        ["Engineering", "Alice Johnson", "95000.00", "2"],
+        ["Engineering", "Bob Smith", "88000.00", "3"],
+        ["Marketing", "Edward Wilson", "72000.00", "1"],
+        ["Marketing", "Fiona Davis", "65000.00", "2"],
+        ["Marketing", "Hannah Taylor", "61000.00", "3"],
+        ["Sales", "Laura White", "53000.00", "1"],
+        ["Sales", "Julia Thomas", "51000.00", "2"],
+        ["Sales", "Kevin Jackson", "48000.00", "3"]
+    ]
+}

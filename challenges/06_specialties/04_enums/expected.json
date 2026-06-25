@@ -1,0 +1,10 @@
+{
+    "columns": ["order_id", "customer_name", "total", "status", "order_date"],
+    "rows": [
+        ["3", "Charlie Brown", "89.99", "processing", "2024-02-01"],
+        ["4", "Diana Lee", "450.00", "pending", "2024-02-15"],
+        ["7", "George Martinez", "330.00", "processing", "2024-03-15"],
+        ["8", "Hannah Taylor", "85.00", "shipped", "2024-03-20"],
+        ["2", "Bob Smith", "275.50", "shipped", "2024-01-20"]
+    ]
+}

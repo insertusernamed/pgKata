@@ -1,0 +1,6 @@
+{
+    "columns": ["name", "email", "total"],
+    "rows": [
+        ["Alice", "Alice@Example.com", "100.00"]
+    ]
+}

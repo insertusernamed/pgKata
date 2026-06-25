@@ -1,0 +1,9 @@
+{
+    "columns": ["name", "skill_count", "years_experience"],
+    "rows": [
+        ["Alice Johnson", "4", "5"],
+        ["Charlie Brown", "4", "4"],
+        ["Diana Lee", "5", "7"],
+        ["Fiona Davis", "4", "4"]
+    ]
+}

@@ -1,0 +1,7 @@
+{
+    "columns": ["in_both_tables"],
+    "rows": [
+        ["charlie@example.com"],
+        ["diana@example.com"]
+    ]
+}

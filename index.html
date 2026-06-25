@@ -64,20 +64,23 @@
             <div class="psql-bar">
                 <span class="psql-prompt">=#</span>
                 <input type="text" class="psql-input" id="psql-input" placeholder="Type a command..." list="psql-commands" autocomplete="off" onkeydown="if(event.key==='Enter')window.runPsql()" />
-                <datalist id="psql-commands">
-                    <option value="\dt">
-                    <option value="\d">
-                    <option value="\d+">
-                    <option value="\di">
-                    <option value="\dv">
-                    <option value="\df">
-                    <option value="\du">
-                    <option value="\l">
-                    <option value="\dn">
-                    <option value="\x">
-                    <option value="\conninfo">
-                    <option value="\?">
-                </datalist>
+        <datalist id="psql-commands">
+            <option value="\dt">
+            <option value="\d">
+            <option value="\d+">
+            <option value="\di">
+            <option value="\dv">
+            <option value="\df">
+            <option value="\du">
+            <option value="\ds">
+            <option value="\dT">
+            <option value="\dx">
+            <option value="\l">
+            <option value="\dn">
+            <option value="\x">
+            <option value="\conninfo">
+            <option value="\?">
+        </datalist>
                 <button class="btn psql-btn" onclick="window.runPsql()">Run</button>
             </div>
             <div id="verify-result" style="display:none"></div>
@@ -615,8 +618,26 @@ async function loadSchema() {
         if (editor) {
             editor.setOption('hintOptions', { tables, completeSingle: false })
         }
+        updatePsqlDatalist()
     } catch(e) {
         console.error('loadSchema failed:', e)
+    }
+}
+
+function updatePsqlDatalist() {
+    const list = document.getElementById('psql-commands')
+    if (!list) return
+    const existing = new Set()
+    list.querySelectorAll('option').forEach(o => existing.add(o.value))
+    for (const table of Object.keys(schemaTables)) {
+        for (const val of [table, '\\d ' + table, '\\d+ ' + table]) {
+            if (!existing.has(val)) {
+                const opt = document.createElement('option')
+                opt.value = val
+                list.appendChild(opt)
+                existing.add(val)
+            }
+        }
     }
 }
 
@@ -882,44 +903,52 @@ window.runPsql = async function() {
         if (main === '\\conninfo') {
             container.innerHTML = `<div class="psql-result-text">You are connected to database "pgkata" as user "pglite" via PostgreSQL (WASM) at version ${pg ? '16' : '?'}.</div>`; return
         }
-        if (main === '\\l') return psqlTable(container, `SELECT datname AS name, pg_catalog.pg_get_userbyid(datdba) AS owner, pg_encoding_to_char(encoding) AS encoding, datcollate AS collate, datctype AS ctype FROM pg_catalog.pg_database ORDER BY datname`, 'Databases')
-        if (main === '\\dn') return psqlTable(container, `SELECT nspname AS schema_name, pg_catalog.pg_get_userbyid(nspowner) AS owner FROM pg_catalog.pg_namespace ORDER BY nspname`, 'Schemas')
-        if (main === '\\dt') return psqlTable(container, `SELECT schemaname AS schema, tablename AS table_name, tableowner AS owner FROM pg_catalog.pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename`, 'Tables')
-        if (main === '\\di') return psqlTable(container, `SELECT schemaname AS schema, indexname AS index_name, tablename AS table_name FROM pg_catalog.pg_indexes WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename, indexname`, 'Indexes')
-        if (main === '\\dv') return psqlTable(container, `SELECT schemaname AS schema, viewname AS view_name, viewowner AS owner FROM pg_catalog.pg_views WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, viewname`, 'Views')
-        if (main === '\\df') return psqlTable(container, `SELECT n.nspname AS schema, p.proname AS name, pg_catalog.pg_get_function_result(p.oid) AS result_type, pg_catalog.pg_get_function_arguments(p.oid) AS arguments FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON p.pronamespace = n.oid WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND p.prokind = 'f' ORDER BY n.nspname, p.proname`, 'Functions')
-        if (main === '\\du') return psqlTable(container, `SELECT rolname AS role_name, rolsuper AS superuser, rolcreatedb AS create_db FROM pg_catalog.pg_roles ORDER BY rolname`, 'Roles')
+
+        const tableCmds = {
+            '\\l':  ['Databases', `SELECT datname AS name, pg_catalog.pg_get_userbyid(datdba) AS owner, pg_encoding_to_char(encoding) AS encoding, datcollate AS collate, datctype AS ctype FROM pg_catalog.pg_database ORDER BY datname`],
+            '\\dn': ['Schemas', `SELECT nspname AS schema_name, pg_catalog.pg_get_userbyid(nspowner) AS owner FROM pg_catalog.pg_namespace ORDER BY nspname`],
+            '\\dt': ['Tables', `SELECT schemaname AS schema, tablename AS table_name, tableowner AS owner FROM pg_catalog.pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename`],
+            '\\di': ['Indexes', `SELECT schemaname AS schema, indexname AS index_name, tablename AS table_name FROM pg_catalog.pg_indexes WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename, indexname`],
+            '\\dv': ['Views', `SELECT schemaname AS schema, viewname AS view_name, viewowner AS owner FROM pg_catalog.pg_views WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, viewname`],
+            '\\df': ['Functions', `SELECT n.nspname AS schema, p.proname AS name, pg_catalog.pg_get_function_result(p.oid) AS result_type, pg_catalog.pg_get_function_arguments(p.oid) AS arguments FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON p.pronamespace = n.oid WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND p.prokind = 'f' ORDER BY n.nspname, p.proname`],
+            '\\du': ['Roles', `SELECT rolname AS role_name, rolsuper AS superuser, rolcreatedb AS create_db FROM pg_catalog.pg_roles ORDER BY rolname`],
+            '\\ds': ['Sequences', `SELECT sequence_name, data_type, start_value, increment FROM information_schema.sequences WHERE sequence_schema = 'public' ORDER BY sequence_name`],
+            '\\dT': ['Data Types', `SELECT t.typname AS name, CASE t.typtype WHEN 'b' THEN 'base' WHEN 'c' THEN 'composite' WHEN 'd' THEN 'domain' WHEN 'e' THEN 'enum' WHEN 'p' THEN 'pseudo' ELSE 'other' END AS type, n.nspname AS schema FROM pg_catalog.pg_type t JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND t.typtype IN ('e', 'd') ORDER BY n.nspname, t.typname`],
+            '\\dx': ['Extensions', `SELECT extname AS name, extversion AS version, n.nspname AS schema FROM pg_catalog.pg_extension e JOIN pg_catalog.pg_namespace n ON e.extnamespace = n.oid ORDER BY extname`],
+        }
+
+        const cmdInfo = tableCmds[main]
+        if (cmdInfo) return psqlTable(container, cmdInfo[1], cmdInfo[0])
 
         if ((main === '\\d' || main === '\\d+') && parts.length > 1) {
-            const name = parts[parts.length - 1]
-            const r = await tryPsqlQuery(`SELECT column_name AS "Column", data_type AS "Type", CASE WHEN is_nullable = 'YES' THEN 'YES' ELSE 'NO' END AS "Nullable", COALESCE(column_default, '') AS "Default" FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${name.replace(/'/g, "''")}' ORDER BY ordinal_position`)
-            if (r && r.columns && r.columns.length > 0) {
+            const name = parts[parts.length - 1].replace(/'/g, "''")
+            const typeResult = await pgQuery(`SELECT relkind FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid WHERE c.relname = '${name}' AND n.nspname NOT IN ('pg_catalog', 'information_schema')`)
+            if (typeResult.rows.length > 0) {
+                const relkind = typeResult.rows[0].relkind
                 container.innerHTML = ''
-                const block = document.createElement('div')
-                block.className = 'result-block'
-                block.innerHTML = `<div class="result-label">Table "public.${esc(name)}"</div>
-                    <table class="result-table"><thead><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
-                    <tbody>${r.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-                container.appendChild(block)
-                const cr = await tryPsqlQuery(`SELECT con.conname AS "Constraint", CASE con.contype WHEN 'p' THEN 'PRIMARY KEY' WHEN 'u' THEN 'UNIQUE' WHEN 'f' THEN 'FOREIGN KEY' WHEN 'c' THEN 'CHECK' ELSE contype::text END AS "Type" FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid = cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace = n.oid WHERE cls.relname = '${name.replace(/'/g, "''")}' AND n.nspname = 'public' ORDER BY con.conname`)
-                if (cr && cr.rows.length > 0) {
-                    const cb = document.createElement('div')
-                    cb.className = 'result-block'
-                    cb.innerHTML = `<div class="result-label">Constraints (${cr.rows.length})</div>
-                        <table class="result-table"><thead><tr>${cr.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
-                        <tbody>${cr.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-                    container.appendChild(cb)
+                if (relkind === 'r' || relkind === 'v' || relkind === 'm' || relkind === 'f' || relkind === 'p') {
+                    const r = await tryPsqlQuery(`SELECT column_name AS "Column", data_type AS "Type", CASE WHEN is_nullable = 'YES' THEN 'YES' ELSE 'NO' END AS "Nullable", COALESCE(column_default, '') AS "Default" FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${name}' ORDER BY ordinal_position`)
+                    if (r) renderTable(container, `Table "public.${esc(parts[parts.length - 1])}"`, r.columns, r.rows)
+                    const cr = await tryPsqlQuery(`SELECT con.conname AS "Constraint", CASE con.contype WHEN 'p' THEN 'PRIMARY KEY' WHEN 'u' THEN 'UNIQUE' WHEN 'f' THEN 'FOREIGN KEY' WHEN 'c' THEN 'CHECK' ELSE contype::text END AS "Type", array_agg(a.attname ORDER BY array_position(con.conkey, a.attnum)) AS "Columns" FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid = cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace = n.oid LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid = cls.oid AND a.attnum = ANY(con.conkey) WHERE cls.relname = '${name}' AND n.nspname = 'public' GROUP BY con.conname, con.contype ORDER BY con.conname`)
+                    if (cr && cr.rows.length > 0) renderTable(container, `Constraints`, cr.columns, cr.rows)
+                } else if (relkind === 'S') {
+                    const r = await tryPsqlQuery(`SELECT sequence_name, data_type, start_value, increment, minimum_value, maximum_value, cycle_option FROM information_schema.sequences WHERE sequence_schema = 'public' AND sequence_name = '${name}'`)
+                    if (r) renderTable(container, `Sequence "public.${esc(parts[parts.length - 1])}"`, r.columns, r.rows)
+                } else if (relkind === 'i') {
+                    const r = await tryPsqlQuery(`SELECT schemaname AS schema, indexname AS name, tablename AS table, indexdef AS definition FROM pg_catalog.pg_indexes WHERE indexname = '${name}' AND schemaname NOT IN ('pg_catalog', 'information_schema')`)
+                    if (r) renderTable(container, `Index "public.${esc(parts[parts.length - 1])}"`, r.columns, r.rows)
                 }
                 return
             }
-            container.innerHTML = `<div class="error-msg">Did not find any relation named "${esc(name)}".</div>`; return
+            container.innerHTML = `<div class="error-msg">Did not find any relation named "${esc(parts[parts.length - 1])}".</div>`; return
         }
 
         if (main === '\\d' || main === '\\d+') {
-            const q = main === '\\d+'
-                ? `SELECT tablename AS table_name, tableowner AS owner, (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = t.tablename) AS columns, (SELECT COUNT(*) FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid = cls.oid WHERE cls.relname = t.tablename) AS constraints FROM pg_catalog.pg_tables t WHERE schemaname = 'public' ORDER BY tablename`
-                : `SELECT tablename AS table_name, tableowner AS owner, (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = t.tablename) AS columns FROM pg_catalog.pg_tables t WHERE schemaname = 'public' ORDER BY tablename`
-            return psqlTable(container, q, 'Tables')
+            const more = main === '\\d+'
+            const q = more
+                ? `SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'S' THEN 'sequence' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'index' ELSE c.relkind::text END AS type, pg_catalog.pg_get_userbyid(c.relowner) AS owner, (SELECT COUNT(*) FROM pg_catalog.pg_indexes i WHERE i.schemaname = n.nspname AND i.tablename = c.relname) AS indexes FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND c.relkind IN ('r', 'v', 'm', 'S', 'f', 'p') ORDER BY n.nspname, c.relname`
+                : `SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'S' THEN 'sequence' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'index' ELSE c.relkind::text END AS type, pg_catalog.pg_get_userbyid(c.relowner) AS owner FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND c.relkind IN ('r', 'v', 'm', 'S', 'f', 'p') ORDER BY n.nspname, c.relname`
+            return psqlTable(container, q, 'List of relations')
         }
 
         container.innerHTML = `<div class="error-msg">Unknown command: ${esc(main)}. Type \\? for help.</div>`; return
@@ -929,12 +958,7 @@ window.runPsql = async function() {
     const tbl = rowsToTable(result)
     if (tbl.columns.length > 0) {
         container.innerHTML = ''
-        const block = document.createElement('div')
-        block.className = 'result-block'
-        block.innerHTML = `<div class="result-label">psql output (${tbl.row_count} rows)</div>
-            <table class="result-table"><thead><tr>${tbl.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
-            <tbody>${tbl.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-        container.appendChild(block)
+        renderTable(container, `psql output (${tbl.row_count} rows)`, tbl.columns, tbl.rows)
     } else {
         container.innerHTML = `<div class="execute-ok">Command executed</div>`
     }
@@ -944,12 +968,15 @@ const PSQL_HELP = `Available psql meta-commands:
     \\l           List databases
     \\dn          List schemas
     \\dt          List tables
-    \\d  [name]   Describe table (columns + constraints)
-    \\d+ [name]   Same as \\d (extended detail)
+    \\d  [name]   Describe relation (table, view, sequence, index...)
+    \\d+ [name]   Describe relation with more detail
     \\di          List indexes
     \\dv          List views
+    \\ds          List sequences
     \\df          List functions
     \\du          List roles
+    \\dT          List data types
+    \\dx          List extensions
     \\x           Toggle expanded display
     \\conninfo    Show connection info
     \\?           Show this help
@@ -968,22 +995,26 @@ async function psqlTable(container, sql, label) {
         container.innerHTML = `<div class="execute-ok">No results</div>`; return
     }
     container.innerHTML = ''
+    renderTable(container, `${esc(label)} (${r.row_count} rows)`, r.columns, r.rows)
+}
+
+function renderTable(container, label, columns, rows) {
     if (psqlExpanded) {
-        r.rows.forEach((row, i) => {
+        rows.forEach((row, i) => {
             const rec = document.createElement('div')
             rec.className = 'expanded-record'
             rec.innerHTML = `<div class="expanded-header">-[ RECORD ${i + 1} ]--</div>` +
                 row.map((val, j) =>
-                    `<div class="expanded-row"><span class="expanded-field">${esc(r.columns[j])}</span><span class="expanded-val">${esc(val || '')}</span></div>`
+                    `<div class="expanded-row"><span class="expanded-field">${esc(columns[j])}</span><span class="expanded-val">${esc(val || '')}</span></div>`
                 ).join('')
             container.appendChild(rec)
         })
     } else {
         const block = document.createElement('div')
         block.className = 'result-block'
-        block.innerHTML = `<div class="result-label">${esc(label)} (${r.row_count} rows)</div>
-            <table class="result-table"><thead><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
-            <tbody>${r.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+        block.innerHTML = `<div class="result-label">${esc(label)}</div>
+            <table class="result-table"><thead><tr>${columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
         container.appendChild(block)
     }
 }

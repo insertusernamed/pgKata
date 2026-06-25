@@ -1,7 +1,7 @@
 {
     "title": "Median Calculation",
     "difficulty": "hard",
-    "description": "Find the median salary for each department. Use percentile_cont or a combination of ROW_NUMBER and COUNT to compute the median.",
+    "description": "Find the median salary for each department. Use percentile_cont or a combination of ROW_NUMBER and COUNT to compute the median. Return columns: department, median_salary.",
     "hints": [
         "PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) computes the median directly",
         "Use it as a window function: PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) OVER (PARTITION BY department)",

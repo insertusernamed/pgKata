@@ -1,7 +1,7 @@
 {
     "title": "LAG and LEAD",
     "difficulty": "medium",
-    "description": "For each employee, show their salary alongside the previous employee's salary (by hire date) and the next employee's salary. Also show the difference from the previous salary.",
+    "description": "For each employee, show their salary alongside the previous employee's salary (by hire date) and the next employee's salary. Also show the difference from the previous salary. Return columns: name, salary, prev_salary, next_salary, diff_from_prev.",
     "hints": [
         "LAG(salary) OVER (ORDER BY hire_date) gets previous row's salary",
         "LEAD(salary) OVER (ORDER BY hire_date) gets next row's salary",

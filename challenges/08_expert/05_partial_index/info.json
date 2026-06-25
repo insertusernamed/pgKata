@@ -1,7 +1,7 @@
 {
     "title": "Partial and Expression Indexes",
     "difficulty": "expert",
-    "description": "Create a partial index on orders for only 'pending' status orders. Then create an expression index on LOWER(email) in the customers table. Query using both indexes.",
+    "description": "Create a partial index on orders for only 'pending' status orders. Then create an expression index on LOWER(email) in the customers table. Query using both indexes. Return columns: name, email, total.",
     "hints": [
         "Partial index: CREATE INDEX idx_pending_orders ON orders(status) WHERE status = 'pending'",
         "Expression index: CREATE INDEX idx_lower_email ON customers(LOWER(email))",

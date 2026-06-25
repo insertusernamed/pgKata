@@ -1,7 +1,7 @@
 {
     "title": "GROUP BY with HAVING",
     "difficulty": "easy",
-    "description": "Find departments that have at least 2 employees and a total salary budget exceeding $150,000. Show department, headcount, and total salary.",
+    "description": "Find departments that have at least 2 employees and a total salary budget exceeding $150,000. Show department, headcount, and total salary. Return columns: department, headcount, total_salary.",
     "hints": [
         "Use GROUP BY department",
         "Use COUNT(*) for headcount",

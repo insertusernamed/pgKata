@@ -1,7 +1,7 @@
 {
     "title": "String Functions",
     "difficulty": "easy",
-    "description": "Format user names: show username in uppercase, email in lowercase, and the length of their bio.",
+    "description": "Format user names: show username in uppercase, email in lowercase, and the length of their bio. Return columns: upper_username, lower_email, bio_length.",
     "hints": [
         "Use UPPER() for the username",
         "Use LOWER() for the email",

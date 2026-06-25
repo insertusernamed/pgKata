@@ -1,7 +1,7 @@
 {
     "title": "LEFT and RIGHT JOIN",
     "difficulty": "easy",
-    "description": "Show all customers and their orders, including customers who have never placed an order. Include customer name and total (NULL if no orders).",
+    "description": "Show all customers and their orders, including customers who have never placed an order. Include customer name and total (NULL if no orders). Return columns: customer_name, total.",
     "hints": [
         "Use LEFT JOIN to keep all customers",
         "LEFT JOIN orders ON customers.customer_id = orders.customer_id",

@@ -1,7 +1,7 @@
 {
     "title": "ROW_NUMBER",
     "difficulty": "medium",
-    "description": "Assign a sequential number to each order per customer, ordered by order_date descending (most recent = 1). Show customer name, order date, total, and the row number.",
+    "description": "Assign a sequential number to each order per customer, ordered by order_date descending (most recent = 1). Show customer name, order date, total, and the row number. Return columns: customer, order_date, total, order_num.",
     "hints": [
         "PARTITION BY customer_id to restart numbering per customer",
         "ORDER BY order_date DESC for most recent first",

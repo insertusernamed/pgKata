@@ -1,7 +1,7 @@
 {
     "title": "Recursive CTE",
     "difficulty": "hard",
-    "description": "Using a recursive CTE, generate the organizational hierarchy starting from the CEO (manager_id IS NULL). Show employee name, level (depth), and the path from CEO to employee.",
+    "description": "Using a recursive CTE, generate the organizational hierarchy starting from the CEO (manager_id IS NULL). Show employee name, level (depth), and the path from CEO to employee. Return columns: employee_id, name, level, path.",
     "hints": [
         "Anchor: SELECT employee_id, name, 0 AS level, name::TEXT AS path WHERE manager_id IS NULL",
         "Recursive: JOIN employees ON manager_id = anchor.employee_id, increment level",

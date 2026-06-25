@@ -1,7 +1,7 @@
 {
     "title": "Date Functions",
     "difficulty": "easy",
-    "description": "Find all projects that were overdue as of April 1, 2025 and show how many days overdue they were.",
+    "description": "Find all projects that were overdue as of April 1, 2025 and show how many days overdue they were. Return columns: project_name, days_overdue.",
     "hints": [
         "Use CURRENT_DATE to get today's date",
         "Use end_date < CURRENT_DATE to find overdue projects",

@@ -1,7 +1,7 @@
 {
     "title": "Self JOIN",
     "difficulty": "medium",
-    "description": "Find pairs of employees who work in the same department. Show each pair once (e.g. 'Alice Johnson' and 'Bob Smith' but not the reverse). Exclude pairing an employee with themself.",
+    "description": "Find pairs of employees who work in the same department. Show each pair once (e.g. 'Alice Johnson' and 'Bob Smith' but not the reverse). Exclude pairing an employee with themself. Return columns: employee_1, employee_2, department.",
     "hints": [
         "Join the employees table to itself",
         "Use aliases e1 and e2",

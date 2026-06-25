@@ -1,7 +1,7 @@
 {
     "title": "Function with Parameters",
     "difficulty": "hard",
-    "description": "Create a function 'get_products_by_price_range(min_price NUMERIC, max_price NUMERIC)' that returns all products within a price range (inclusive).",
+    "description": "Create a function 'get_products_by_price_range(min_price NUMERIC, max_price NUMERIC)' that returns all products within a price range (inclusive). Return columns: product_id, name, price.",
     "hints": [
         "Use RETURNS TABLE(product_id INT, name VARCHAR, price NUMERIC)",
         "RETURN QUERY SELECT ... WHERE price BETWEEN min_price AND max_price",

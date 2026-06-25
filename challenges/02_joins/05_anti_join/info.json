@@ -1,7 +1,7 @@
 {
     "title": "Anti-Join",
     "difficulty": "medium",
-    "description": "Find customers who have NEVER placed an order. Use three different techniques: LEFT JOIN + IS NULL, NOT IN, and NOT EXISTS. Results should be the same.",
+    "description": "Find customers who have NEVER placed an order. Use three different techniques: LEFT JOIN + IS NULL, NOT IN, and NOT EXISTS. Results should be the same. Return columns: customer_id, first_name, last_name, email.",
     "hints": [
         "Technique 1: LEFT JOIN orders ON ... WHERE order_id IS NULL",
         "Technique 2: WHERE customer_id NOT IN (SELECT customer_id FROM orders WHERE customer_id IS NOT NULL)",

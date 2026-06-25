@@ -1,7 +1,7 @@
 {
     "title": "ORDER BY and LIMIT",
     "difficulty": "easy",
-    "description": "List the top 3 most expensive products by price, from highest to lowest.",
+    "description": "List the top 3 most expensive products by price, from highest to lowest. Return columns: product_name, price.",
     "hints": [
         "Use ORDER BY price DESC",
         "Add LIMIT 3 to get only the top 3",

@@ -32,7 +32,7 @@
   "01_foundations/03_string_functions": {
     "title": "String Functions",
     "difficulty": "easy",
-    "description": "Format user names: show username in uppercase, email in lowercase, and the length of their bio.",
+    "description": "Format user names: show username in uppercase, email in lowercase, and the length of their bio. Return columns: upper_username, lower_email, bio_length.",
     "hints": [
       "Use UPPER() for the username",
       "Use LOWER() for the email",
@@ -43,7 +43,7 @@
   "01_foundations/02_order_limit": {
     "title": "ORDER BY and LIMIT",
     "difficulty": "easy",
-    "description": "List the top 3 most expensive products by price, from highest to lowest.",
+    "description": "List the top 3 most expensive products by price, from highest to lowest. Return columns: product_name, price.",
     "hints": [
       "Use ORDER BY price DESC",
       "Add LIMIT 3 to get only the top 3",
@@ -63,7 +63,7 @@
   "01_foundations/06_group_by_having": {
     "title": "GROUP BY with HAVING",
     "difficulty": "easy",
-    "description": "Find departments that have at least 2 employees and a total salary budget exceeding $150,000. Show department, headcount, and total salary.",
+    "description": "Find departments that have at least 2 employees and a total salary budget exceeding $150,000. Show department, headcount, and total salary. Return columns: department, headcount, total_salary.",
     "hints": [
       "Use GROUP BY department",
       "Use COUNT(*) for headcount",
@@ -74,7 +74,7 @@
   "01_foundations/01_select_where": {
     "title": "SELECT with WHERE",
     "difficulty": "easy",
-    "description": "Query employees who earn more than $60,000 in the Engineering department.",
+    "description": "Query employees who earn more than $60,000 in the Engineering department. Return columns: first_name, last_name, salary.",
     "hints": [
       "Use WHERE salary > 60000",
       "Add AND department = 'Engineering'",
@@ -84,7 +84,7 @@
   "01_foundations/05_aggregate_basics": {
     "title": "Aggregate Basics",
     "difficulty": "easy",
-    "description": "Calculate total revenue, average order value, number of orders, and the highest single order for each month in 2024.",
+    "description": "Calculate total revenue, average order value, number of orders, and the highest single order for each month in 2024. Return columns: month, total_revenue, avg_order, num_orders, highest_order.",
     "hints": [
       "Use SUM(total) for total revenue",
       "Use AVG(total) for average order value",
@@ -106,7 +106,7 @@
   "01_foundations/07_union_set": {
     "title": "Set Operations (UNION, INTERSECT, EXCEPT)",
     "difficulty": "medium",
-    "description": "You have two tables: active_users and archived_users. Find all email addresses that appear in BOTH tables (INTERSECT), and also find emails that are in active_users but NOT in archived_users (EXCEPT).",
+    "description": "You have two tables: active_users and archived_users. Find all email addresses that appear in BOTH tables (INTERSECT), and also find emails that are in active_users but NOT in archived_users (EXCEPT). Return columns: in_both_tables.",
     "hints": [
       "Use INTERSECT to find common emails",
       "Use EXCEPT to find emails only in active",
@@ -117,7 +117,7 @@
   "01_foundations/04_date_functions": {
     "title": "Date Functions",
     "difficulty": "easy",
-    "description": "Find all projects that were overdue as of April 1, 2025 and show how many days overdue they were.",
+    "description": "Find all projects that were overdue as of April 1, 2025 and show how many days overdue they were. Return columns: project_name, days_overdue.",
     "hints": [
       "Use CURRENT_DATE to get today's date",
       "Use end_date < CURRENT_DATE to find overdue projects",
@@ -128,7 +128,7 @@
   "05_window/02_rank_dense": {
     "title": "RANK and DENSE_RANK",
     "difficulty": "medium",
-    "description": "Rank employees by salary within each department. Show RANK and DENSE_RANK side by side so you can see the difference when salaries tie.",
+    "description": "Rank employees by salary within each department. Show RANK and DENSE_RANK side by side so you can see the difference when salaries tie. Return columns: department, name, salary, rank, dense_rank.",
     "hints": [
       "RANK() leaves gaps after ties (1,1,3,4)",
       "DENSE_RANK() does not leave gaps (1,1,2,3)",
@@ -158,7 +158,7 @@
   "05_window/05_first_last_value": {
     "title": "FIRST_VALUE and LAST_VALUE",
     "difficulty": "hard",
-    "description": "For each employee, show their salary compared to the highest and lowest salary in their department. Use FIRST_VALUE and LAST_VALUE with window frames.",
+    "description": "For each employee, show their salary compared to the highest and lowest salary in their department. Use FIRST_VALUE and LAST_VALUE with window frames. Return columns: department, name, salary, highest_in_dept, lowest_in_dept.",
     "hints": [
       "FIRST_VALUE(salary) OVER (PARTITION BY department ORDER BY salary DESC) gives the highest",
       "LAST_VALUE needs a frame: ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",
@@ -168,7 +168,7 @@
   "05_window/01_row_number": {
     "title": "ROW_NUMBER",
     "difficulty": "medium",
-    "description": "Assign a sequential number to each order per customer, ordered by order_date descending (most recent = 1). Show customer name, order date, total, and the row number.",
+    "description": "Assign a sequential number to each order per customer, ordered by order_date descending (most recent = 1). Show customer name, order date, total, and the row number. Return columns: customer, order_date, total, order_num.",
     "hints": [
       "PARTITION BY customer_id to restart numbering per customer",
       "ORDER BY order_date DESC for most recent first",
@@ -178,7 +178,7 @@
   "05_window/04_lag_lead": {
     "title": "LAG and LEAD",
     "difficulty": "medium",
-    "description": "For each employee, show their salary alongside the previous employee's salary (by hire date) and the next employee's salary. Also show the difference from the previous salary.",
+    "description": "For each employee, show their salary alongside the previous employee's salary (by hire date) and the next employee's salary. Also show the difference from the previous salary. Return columns: name, salary, prev_salary, next_salary, diff_from_prev.",
     "hints": [
       "LAG(salary) OVER (ORDER BY hire_date) gets previous row's salary",
       "LEAD(salary) OVER (ORDER BY hire_date) gets next row's salary",
@@ -188,7 +188,7 @@
   "09_leetcode/05_tree_traversal": {
     "title": "Tree Traversal with Recursive CTE",
     "difficulty": "expert",
-    "description": "Given a 'nodes' table where each node has a parent_id (NULL for root), classify each node as 'Root' (no parent), 'Inner' (has both parent and children), or 'Leaf' (has parent but no children).",
+    "description": "Given a 'nodes' table where each node has a parent_id (NULL for root), classify each node as 'Root' (no parent), 'Inner' (has both parent and children), or 'Leaf' (has parent but no children). Return columns: id, type.",
     "hints": [
       "Use a recursive CTE to find all ancestors/descendants",
       "Or use simpler approach with subqueries: check p_id IS NULL for Root",
@@ -198,7 +198,7 @@
   "09_leetcode/04_median": {
     "title": "Median Calculation",
     "difficulty": "hard",
-    "description": "Find the median salary for each department. Use percentile_cont or a combination of ROW_NUMBER and COUNT to compute the median.",
+    "description": "Find the median salary for each department. Use percentile_cont or a combination of ROW_NUMBER and COUNT to compute the median. Return columns: department, median_salary.",
     "hints": [
       "PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) computes the median directly",
       "Use it as a window function: PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) OVER (PARTITION BY department)",
@@ -249,7 +249,7 @@
   "06_specialties/04_enums": {
     "title": "Enum Types",
     "difficulty": "medium",
-    "description": "Create and use a custom ENUM type for order statuses. Then query to find all orders with statuses that are NOT 'delivered' or 'cancelled' (i.e., active orders).",
+    "description": "Create and use a custom ENUM type for order statuses. Then query to find all orders with statuses that are NOT 'delivered' or 'cancelled' (i.e., active orders). Return columns: order_id, customer_name, total, status, order_date.",
     "hints": [
       "CREATE TYPE order_status AS ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled')",
       "Use the enum type as a column type in the orders table",
@@ -259,7 +259,7 @@
   "06_specialties/05_type_casting": {
     "title": "Type Casting and Formatting",
     "difficulty": "medium",
-    "description": "You have a table with messy data: dates stored as strings, prices as text with dollar signs, and phone numbers in inconsistent formats. Clean and transform each column into proper types.",
+    "description": "You have a table with messy data: dates stored as strings, prices as text with dollar signs, and phone numbers in inconsistent formats. Clean and transform each column into proper types. Return columns: id, sale_date, price, phone_formatted.",
     "hints": [
       "Use ::DATE to cast strings to proper date type",
       "Use REPLACE to remove $ then ::NUMERIC",
@@ -280,7 +280,7 @@
   "06_specialties/01_jsonb": {
     "title": "JSONB Operations",
     "difficulty": "medium",
-    "description": "Query a table with JSONB data. Find all products where the metadata contains a color field, and extract specific fields from the JSONB into separate columns.",
+    "description": "Query a table with JSONB data. Find all products where the metadata contains a color field, and extract specific fields from the JSONB into separate columns. Return columns: product_name, price, color, material, in_stock.",
     "hints": [
       "Use -> to get JSONB field as JSON, ->> to get as text",
       "Use @> containment operator or ? key-existence operator",
@@ -301,7 +301,7 @@
   "06_specialties/02_arrays": {
     "title": "Array Operations",
     "difficulty": "medium",
-    "description": "Work with PostgreSQL arrays. Find all employees who have 'Python' in their skills array, show their name, and the total number of skills they have.",
+    "description": "Work with PostgreSQL arrays. Find all employees who have 'Python' in their skills array, show their name, and the total number of skills they have. Return columns: name, skill_count, years_experience.",
     "hints": [
       "Use ANY() or @> to check array containment",
       "Use array_length(skills, 1) for count of skills",
@@ -311,7 +311,7 @@
   "03_aggregation/02_having": {
     "title": "HAVING Clause",
     "difficulty": "easy",
-    "description": "Find departments where the average salary is above $60,000 and there are at least 3 employees.",
+    "description": "Find departments where the average salary is above $60,000 and there are at least 3 employees. Return columns: department, avg_salary, employee_count.",
     "hints": [
       "GROUP BY department",
       "HAVING AVG(salary) > 60000 AND COUNT(*) >= 3",
@@ -321,7 +321,7 @@
   "03_aggregation/03_rollup_cube": {
     "title": "ROLLUP and CUBE",
     "difficulty": "medium",
-    "description": "Using ROLLUP, generate total sales grouped by (year, quarter) with subtotals per year and a grand total. Also try CUBE.",
+    "description": "Using ROLLUP, generate total sales grouped by (year, quarter) with subtotals per year and a grand total. Also try CUBE. Return columns: year, total_sales.",
     "hints": [
       "Use GROUP BY ROLLUP(year, quarter)",
       "EXTRACT(YEAR FROM order_date) for year",
@@ -352,7 +352,7 @@
   "03_aggregation/01_group_basics": {
     "title": "GROUP BY Basics",
     "difficulty": "easy",
-    "description": "For each product category, find the total stock, average price, cheapest product price, and most expensive product price.",
+    "description": "For each product category, find the total stock, average price, cheapest product price, and most expensive product price. Return columns: category, total_stock, avg_price, min_price, max_price.",
     "hints": [
       "GROUP BY category",
       "SUM(stock), AVG(price), MIN(price), MAX(price)",
@@ -362,7 +362,7 @@
   "03_aggregation/05_case_aggregation": {
     "title": "Conditional Aggregation with CASE",
     "difficulty": "medium",
-    "description": "Create a summary showing how many students got each letter grade (A: >=90, B: >=80, C: >=70, D: >=60, F: <60) for each course. Show course name and count per grade.",
+    "description": "Create a summary showing how many students got each letter grade (A: >=90, B: >=80, C: >=70, D: >=60, F: <60) for each course. Show course name and count per grade. Return columns: course, a_count, b_count, c_count, d_count, f_count.",
     "hints": [
       "Use CASE inside COUNT() for each grade bucket",
       "CASE WHEN score >= 90 THEN 1 END counts A's",
@@ -383,7 +383,7 @@
   "08_expert/01_recursive_cte": {
     "title": "Recursive CTE",
     "difficulty": "hard",
-    "description": "Using a recursive CTE, generate the organizational hierarchy starting from the CEO (manager_id IS NULL). Show employee name, level (depth), and the path from CEO to employee.",
+    "description": "Using a recursive CTE, generate the organizational hierarchy starting from the CEO (manager_id IS NULL). Show employee name, level (depth), and the path from CEO to employee. Return columns: employee_id, name, level, path.",
     "hints": [
       "Anchor: SELECT employee_id, name, 0 AS level, name::TEXT AS path WHERE manager_id IS NULL",
       "Recursive: JOIN employees ON manager_id = anchor.employee_id, increment level",
@@ -394,7 +394,7 @@
   "08_expert/05_partial_index": {
     "title": "Partial and Expression Indexes",
     "difficulty": "expert",
-    "description": "Create a partial index on orders for only 'pending' status orders. Then create an expression index on LOWER(email) in the customers table. Query using both indexes.",
+    "description": "Create a partial index on orders for only 'pending' status orders. Then create an expression index on LOWER(email) in the customers table. Query using both indexes. Return columns: name, email, total.",
     "hints": [
       "Partial index: CREATE INDEX idx_pending_orders ON orders(status) WHERE status = 'pending'",
       "Expression index: CREATE INDEX idx_lower_email ON customers(LOWER(email))",
@@ -438,7 +438,7 @@
   "07_plpgsql/02_param_function": {
     "title": "Function with Parameters",
     "difficulty": "hard",
-    "description": "Create a function 'get_products_by_price_range(min_price NUMERIC, max_price NUMERIC)' that returns all products within a price range (inclusive).",
+    "description": "Create a function 'get_products_by_price_range(min_price NUMERIC, max_price NUMERIC)' that returns all products within a price range (inclusive). Return columns: product_id, name, price.",
     "hints": [
       "Use RETURNS TABLE(product_id INT, name VARCHAR, price NUMERIC)",
       "RETURN QUERY SELECT ... WHERE price BETWEEN min_price AND max_price",
@@ -490,7 +490,7 @@
   "02_joins/05_anti_join": {
     "title": "Anti-Join",
     "difficulty": "medium",
-    "description": "Find customers who have NEVER placed an order. Use three different techniques: LEFT JOIN + IS NULL, NOT IN, and NOT EXISTS. Results should be the same.",
+    "description": "Find customers who have NEVER placed an order. Use three different techniques: LEFT JOIN + IS NULL, NOT IN, and NOT EXISTS. Results should be the same. Return columns: customer_id, first_name, last_name, email.",
     "hints": [
       "Technique 1: LEFT JOIN orders ON ... WHERE order_id IS NULL",
       "Technique 2: WHERE customer_id NOT IN (SELECT customer_id FROM orders WHERE customer_id IS NOT NULL)",
@@ -500,7 +500,7 @@
   "02_joins/04_multi_join": {
     "title": "Multi-Table JOIN",
     "difficulty": "medium",
-    "description": "Show each order with the product name, quantity, the customer who placed it, and the salesperson who handled it.",
+    "description": "Show each order with the product name, quantity, the customer who placed it, and the salesperson who handled it. Return columns: order_id, customer, salesperson, product, qty.",
     "hints": [
       "Join orders -> customers, orders -> order_items, order_items -> products, orders -> salesperson",
       "Use meaningful table aliases (o, c, oi, p, s)",
@@ -510,7 +510,7 @@
   "02_joins/03_self_join": {
     "title": "Self JOIN",
     "difficulty": "medium",
-    "description": "Find pairs of employees who work in the same department. Show each pair once (e.g. 'Alice Johnson' and 'Bob Smith' but not the reverse). Exclude pairing an employee with themself.",
+    "description": "Find pairs of employees who work in the same department. Show each pair once (e.g. 'Alice Johnson' and 'Bob Smith' but not the reverse). Exclude pairing an employee with themself. Return columns: employee_1, employee_2, department.",
     "hints": [
       "Join the employees table to itself",
       "Use aliases e1 and e2",
@@ -521,7 +521,7 @@
   "02_joins/01_inner_join": {
     "title": "INNER JOIN",
     "difficulty": "easy",
-    "description": "List each order with the customer's full name and email. Only include orders that belong to existing customers.",
+    "description": "List each order with the customer's full name and email. Only include orders that belong to existing customers. Return columns: order_id, customer_name, email, total.",
     "hints": [
       "Use INNER JOIN customers ON orders.customer_id = customers.customer_id",
       "Use CONCAT(first_name, ' ', last_name) or || for full name",
@@ -531,7 +531,7 @@
   "02_joins/02_left_right_join": {
     "title": "LEFT and RIGHT JOIN",
     "difficulty": "easy",
-    "description": "Show all customers and their orders, including customers who have never placed an order. Include customer name and total (NULL if no orders).",
+    "description": "Show all customers and their orders, including customers who have never placed an order. Include customer name and total (NULL if no orders). Return columns: customer_name, total.",
     "hints": [
       "Use LEFT JOIN to keep all customers",
       "LEFT JOIN orders ON customers.customer_id = orders.customer_id",
@@ -541,7 +541,7 @@
   "04_subqueries/02_derived_table": {
     "title": "Derived Table (Subquery in FROM)",
     "difficulty": "medium",
-    "description": "Find the top 3 highest-paid employees per department. Use a derived table with ROW_NUMBER() to rank employees within each department.",
+    "description": "Find the top 3 highest-paid employees per department. Use a derived table with ROW_NUMBER() to rank employees within each department. Return columns: department, employee, salary, rank.",
     "hints": [
       "First create a derived table with ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC)",
       "Then in the outer query, filter WHERE rn <= 3",
@@ -551,7 +551,7 @@
   "04_subqueries/03_exists_in": {
     "title": "Subqueries with EXISTS / IN",
     "difficulty": "medium",
-    "description": "Find all customers who have placed an order with a total greater than $200. Use both IN and EXISTS approaches (separate queries, but for verification just provide one).",
+    "description": "Find all customers who have placed an order with a total greater than $200. Use both IN and EXISTS approaches (separate queries, but for verification just provide one). Return columns: customer_id, first_name, last_name.",
     "hints": [
       "IN: WHERE customer_id IN (SELECT customer_id FROM orders WHERE total > 200)",
       "EXISTS: WHERE EXISTS (SELECT 1 FROM orders WHERE customer_id = c.customer_id AND total > 200)",
@@ -561,7 +561,7 @@
   "04_subqueries/04_cte": {
     "title": "Common Table Expressions (CTE)",
     "difficulty": "medium",
-    "description": "Using WITH (CTE), write a query that finds the top 2 products by total revenue (quantity * price) for each category. Use a CTE to compute product revenue, then ROW_NUMBER to rank within categories.",
+    "description": "Using WITH (CTE), write a query that finds the top 2 products by total revenue (quantity * price) for each category. Use a CTE to compute product revenue, then ROW_NUMBER to rank within categories. Return columns: category, product_name, total_revenue.",
     "hints": [
       "Start with WITH product_revenue AS (SELECT ...)",
       "Compute quantity * price as revenue, join order_items with products",
@@ -571,7 +571,7 @@
   "04_subqueries/05_correlated": {
     "title": "Correlated Subqueries",
     "difficulty": "hard",
-    "description": "Find employees who earn more than the average salary of their department. Show employee name, department, their salary, and the department average. Order by salary descending.",
+    "description": "Find employees who earn more than the average salary of their department. Show employee name, department, their salary, and the department average. Order by salary descending. Return columns: employee_name, department, salary, dept_avg.",
     "hints": [
       "A correlated subquery references the outer query's table",
       "SELECT AVG(salary) FROM employees e2 WHERE e2.department = e1.department",

@@ -1,7 +1,7 @@
 {
     "title": "SELECT with WHERE",
     "difficulty": "easy",
-    "description": "Query employees who earn more than $60,000 in the Engineering department.",
+    "description": "Query employees who earn more than $60,000 in the Engineering department. Return columns: first_name, last_name, salary.",
     "hints": [
         "Use WHERE salary > 60000",
         "Add AND department = 'Engineering'",

@@ -1,7 +1,7 @@
 {
     "title": "Derived Table (Subquery in FROM)",
     "difficulty": "medium",
-    "description": "Find the top 3 highest-paid employees per department. Use a derived table with ROW_NUMBER() to rank employees within each department.",
+    "description": "Find the top 3 highest-paid employees per department. Use a derived table with ROW_NUMBER() to rank employees within each department. Return columns: department, employee, salary, rank.",
     "hints": [
         "First create a derived table with ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC)",
         "Then in the outer query, filter WHERE rn <= 3",

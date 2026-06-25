@@ -1,7 +1,7 @@
 {
     "title": "JSONB Operations",
     "difficulty": "medium",
-    "description": "Query a table with JSONB data. Find all products where the metadata contains a color field, and extract specific fields from the JSONB into separate columns.",
+    "description": "Query a table with JSONB data. Find all products where the metadata contains a color field, and extract specific fields from the JSONB into separate columns. Return columns: product_name, price, color, material, in_stock.",
     "hints": [
         "Use -> to get JSONB field as JSON, ->> to get as text",
         "Use @> containment operator or ? key-existence operator",

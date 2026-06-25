@@ -1,7 +1,7 @@
 {
     "title": "Aggregate Basics",
     "difficulty": "easy",
-    "description": "Calculate total revenue, average order value, number of orders, and the highest single order for each month in 2024.",
+    "description": "Calculate total revenue, average order value, number of orders, and the highest single order for each month in 2024. Return columns: month, total_revenue, avg_order, num_orders, highest_order.",
     "hints": [
         "Use SUM(total) for total revenue",
         "Use AVG(total) for average order value",

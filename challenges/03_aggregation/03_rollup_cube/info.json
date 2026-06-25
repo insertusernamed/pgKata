@@ -1,7 +1,7 @@
 {
     "title": "ROLLUP and CUBE",
     "difficulty": "medium",
-    "description": "Using ROLLUP, generate total sales grouped by (year, quarter) with subtotals per year and a grand total. Also try CUBE.",
+    "description": "Using ROLLUP, generate total sales grouped by (year, quarter) with subtotals per year and a grand total. Also try CUBE. Return columns: year, total_sales.",
     "hints": [
         "Use GROUP BY ROLLUP(year, quarter)",
         "EXTRACT(YEAR FROM order_date) for year",

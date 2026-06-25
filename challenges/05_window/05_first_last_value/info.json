@@ -1,7 +1,7 @@
 {
     "title": "FIRST_VALUE and LAST_VALUE",
     "difficulty": "hard",
-    "description": "For each employee, show their salary compared to the highest and lowest salary in their department. Use FIRST_VALUE and LAST_VALUE with window frames.",
+    "description": "For each employee, show their salary compared to the highest and lowest salary in their department. Use FIRST_VALUE and LAST_VALUE with window frames. Return columns: department, name, salary, highest_in_dept, lowest_in_dept.",
     "hints": [
         "FIRST_VALUE(salary) OVER (PARTITION BY department ORDER BY salary DESC) gives the highest",
         "LAST_VALUE needs a frame: ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",

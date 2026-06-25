@@ -1,7 +1,7 @@
 {
     "title": "Type Casting and Formatting",
     "difficulty": "medium",
-    "description": "You have a table with messy data: dates stored as strings, prices as text with dollar signs, and phone numbers in inconsistent formats. Clean and transform each column into proper types.",
+    "description": "You have a table with messy data: dates stored as strings, prices as text with dollar signs, and phone numbers in inconsistent formats. Clean and transform each column into proper types. Return columns: id, sale_date, price, phone_formatted.",
     "hints": [
         "Use ::DATE to cast strings to proper date type",
         "Use REPLACE to remove $ then ::NUMERIC",

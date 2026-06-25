@@ -1,7 +1,7 @@
 {
     "title": "Enum Types",
     "difficulty": "medium",
-    "description": "Create and use a custom ENUM type for order statuses. Then query to find all orders with statuses that are NOT 'delivered' or 'cancelled' (i.e., active orders).",
+    "description": "Create and use a custom ENUM type for order statuses. Then query to find all orders with statuses that are NOT 'delivered' or 'cancelled' (i.e., active orders). Return columns: order_id, customer_name, total, status, order_date.",
     "hints": [
         "CREATE TYPE order_status AS ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled')",
         "Use the enum type as a column type in the orders table",

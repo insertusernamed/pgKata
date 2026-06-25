@@ -46,9 +46,7 @@
                 <textarea id="editor" style="display:none"></textarea>
                 <div class="editor-footer">
                     <div class="indent-selector" id="indent-selector">
-                        <span class="indent-option" data-indent="2" onclick="window.setIndentUnit(2)">2</span>
-                        <span class="indent-option active" data-indent="4" onclick="window.setIndentUnit(4)">4</span>
-                        <span class="indent-option" data-indent="8" onclick="window.setIndentUnit(8)">8</span>
+                        <span id="indent-sizes"></span>
                         <span class="indent-divider">|</span>
                         <span class="indent-option" data-mode="spaces" onclick="window.setIndentMode('spaces')">Spaces</span>
                         <span class="indent-option" data-mode="tabs" onclick="window.setIndentMode('tabs')">Tab</span>
@@ -124,6 +122,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/hint/show-hint.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/hint/sql-hint.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sql-formatter/dist/sql-formatter.min.js"></script>
 
 <script type="module">
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite/dist/index.js'
@@ -148,6 +147,7 @@ let hintLevel = 0
 let autosaveTimer = null
 let splitDragging = false
 let psqlExpanded = false
+let schemaTables = {}
 
 const PROGRESS_KEY = 'pgkata_progress'
 
@@ -255,45 +255,45 @@ initSplitPane()
 // ── Indent prefs ────────────────────────────────────
 
 function loadIndentPref() {
-    try { return JSON.parse(localStorage.getItem('sql_indent_pref')) || { size: 4, mode: 'spaces' } }
-    catch(e) { return { size: 4, mode: 'spaces' } }
+    try { return JSON.parse(localStorage.getItem('sql_indent_pref')) || { size: 1, mode: 'tabs' } }
+    catch(e) { return { size: 1, mode: 'tabs' } }
 }
 function saveIndentPref(pref) {
     try { localStorage.setItem('sql_indent_pref', JSON.stringify(pref)) } catch(e) {}
 }
 function updateIndentSelector(pref) {
-    document.querySelectorAll('.indent-option').forEach(el => el.classList.remove('active'))
-    const s = document.querySelector(`.indent-option[data-indent="${pref.size}"]`)
-    if (s) s.classList.add('active')
-    const m = document.querySelector(`.indent-option[data-mode="${pref.mode}"]`)
-    if (m) m.classList.add('active')
+    const sizes = document.getElementById('indent-sizes')
+    const sizeOpts = pref.mode === 'tabs' ? [1, 2, 3] : [2, 4, 6]
+    sizes.innerHTML = sizeOpts.map(s =>
+        `<span class="indent-option${s === pref.size ? ' active' : ''}" data-indent="${s}" onclick="window.setIndentUnit(${s})">${s}</span>`
+    ).join('')
+    document.querySelectorAll('.indent-option[data-mode]').forEach(el => {
+        el.classList.toggle('active', el.dataset.mode === pref.mode)
+    })
 }
 
 window.setIndentUnit = function(size) {
-    if (!editor) return
     const pref = loadIndentPref()
     pref.size = parseInt(size)
-    pref.mode = editor.getOption('indentWithTabs') ? 'tabs' : 'spaces'
     saveIndentPref(pref)
-    editor.setOption('indentUnit', pref.size)
-    if (!editor.getOption('indentWithTabs')) editor.setOption('tabSize', pref.size)
+    if (editor) {
+        const unit = pref.mode === 'tabs' ? pref.size * 4 : pref.size
+        editor.setOption('indentUnit', unit)
+        editor.setOption('tabSize', 4)
+    }
     updateIndentSelector(pref)
 }
 
 window.setIndentMode = function(mode) {
-    if (!editor) return
     const pref = loadIndentPref()
     pref.mode = mode
-    if (mode === 'tabs') {
-        editor.setOption('indentWithTabs', true)
-        editor.setOption('indentUnit', pref.size)
-        editor.setOption('tabSize', pref.size)
-    } else {
-        editor.setOption('indentWithTabs', false)
-        editor.setOption('indentUnit', pref.size)
-        editor.setOption('tabSize', pref.size)
-    }
+    pref.size = mode === 'tabs' ? 1 : 4
     saveIndentPref(pref)
+    if (editor) {
+        editor.setOption('indentWithTabs', mode === 'tabs')
+        editor.setOption('tabSize', 4)
+        editor.setOption('indentUnit', mode === 'tabs' ? 4 : pref.size)
+    }
     updateIndentSelector(pref)
 }
 
@@ -409,22 +409,24 @@ async function markComplete(folder) {
 
 // ── Select challenge ────────────────────────────────
 
-function selectChallenge(folder) {
+async function selectChallenge(folder) {
     saveEditorContent()
     stopAutosave()
     document.querySelectorAll('.challenge-item').forEach(el => {
         el.classList.toggle('active', el.dataset.folder === folder)
     })
+    const prev = currentFolder
     currentFolder = folder
+    try { localStorage.setItem('pgkata_current', folder) } catch(e) {}
     $('run-btn').disabled = false
     $('verify-btn').disabled = false
     $('hint-btn').disabled = false
     hintLevel = 0
     $('hint-content').style.display = 'none'
-    loadFolder(folder)
+    await loadFolder(folder, prev)
 }
 
-function loadFolder(folder) {
+async function loadFolder(folder, prev) {
     const meta = challengeMeta[folder] || {}
     const label = folder
     $('file-label').textContent = label
@@ -441,8 +443,8 @@ function loadFolder(folder) {
             theme: 'monokai',
             lineNumbers: true,
             indentWithTabs: savedIndent.mode === 'tabs',
-            indentUnit: savedIndent.size,
-            tabSize: savedIndent.mode === 'tabs' ? savedIndent.size : 4,
+            indentUnit: savedIndent.mode === 'tabs' ? savedIndent.size * 4 : savedIndent.size,
+            tabSize: 4,
             smartIndent: true,
             lineWrapping: true,
             autoCloseBrackets: true,
@@ -476,12 +478,11 @@ function loadFolder(folder) {
         })
         editor.on('inputRead', function(cm, change) {
             if (change.text.length === 1 && /\w/.test(change.text[0]) && !cm.state.completionActive) {
-                cm.showHint({ hint: CodeMirror.hint.sql })
+                cm.showHint({ hint: CodeMirror.hint.sql, tables: schemaTables, completeSingle: false })
             }
         })
         editor.on('changes', function() { startAutosave() })
         updateIndentSelector(loadIndentPref())
-        loadSchema()
     }
     const saved = loadEditorContent(folder)
     editor.setValue(saved || '-- Write your SQL here\n')
@@ -492,6 +493,109 @@ function loadFolder(folder) {
     $('hint-content').style.display = 'none'
     $('hint-content').innerHTML = ''
     $('verify-result').style.display = 'none'
+    await switchChallenge(folder, prev)
+}
+
+const SNAP_PREFIX = 'pgkata_snap_'
+const SNAP_VERSION = 'pgkata_snap_v2'
+
+const storedVersion = localStorage.getItem('pgkata_snap_version')
+if (storedVersion !== SNAP_VERSION) {
+    Object.keys(localStorage).filter(k => k.startsWith(SNAP_PREFIX)).forEach(k => localStorage.removeItem(k))
+    localStorage.setItem('pgkata_snap_version', SNAP_VERSION)
+}
+
+async function switchChallenge(folder, prev) {
+    if (prev && prev !== folder) await saveSnapshot(prev)
+    const restored = await restoreSnapshot(folder)
+    if (!restored) {
+        await runSetup(folder)
+        saveSnapshot(folder)
+    }
+    await loadSchema()
+}
+
+async function saveSnapshot(folder) {
+    try {
+        const typeLines = []
+        const enums = await pgQuery("SELECT t.typname, e.enumlabel FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid JOIN pg_namespace n ON t.typnamespace = n.oid WHERE n.nspname = 'public' ORDER BY t.typname, e.enumsortorder")
+        let lastType = ''
+        let vals = []
+        for (const row of enums.rows) {
+            if (row.typname !== lastType) {
+                if (vals.length) typeLines.push(`CREATE TYPE "${lastType}" AS ENUM (${vals.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')});`)
+                lastType = row.typname; vals = []
+            }
+            vals.push(row.enumlabel)
+        }
+        if (vals.length) typeLines.push(`CREATE TYPE "${lastType}" AS ENUM (${vals.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')});`)
+
+        const seqs = await pgQuery("SELECT sequence_name, data_type, start_value, increment FROM information_schema.sequences WHERE sequence_schema = 'public'")
+        const seqLines = []
+        for (const s of seqs.rows) {
+            seqLines.push(`CREATE SEQUENCE IF NOT EXISTS "${s.sequence_name}" AS ${s.data_type} START WITH ${s.start_value} INCREMENT BY ${s.increment};`)
+            const r = await pgQuery(`SELECT last_value FROM "${s.sequence_name}"`)
+            if (r.rows.length > 0) seqLines.push(`SELECT setval('"${s.sequence_name}"', ${r.rows[0].last_value}, true);`)
+        }
+
+        const tables = await pgQuery("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
+        const tableLines = []
+        for (const {table_name} of tables.rows) {
+            const info = await pgQuery(`SELECT column_name, data_type, is_nullable, column_default, character_maximum_length, numeric_precision, numeric_scale, udt_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${table_name.replace(/'/g, "''")}' ORDER BY ordinal_position`)
+            const cols = info.rows
+            const colDefs = cols.map(c => {
+                let t = c.data_type === 'USER-DEFINED' ? c.udt_name : c.data_type
+                if (t === 'character varying' && c.character_maximum_length) t = `character varying(${c.character_maximum_length})`
+                if (t === 'numeric' && c.numeric_precision != null) t = c.numeric_scale != null ? `numeric(${c.numeric_precision},${c.numeric_scale})` : `numeric(${c.numeric_precision})`
+                let def = `"${c.column_name}" ${t}`
+                if (c.is_nullable === 'NO') def += ' NOT NULL'
+                if (c.column_default) def += ` DEFAULT ${c.column_default}`
+                return def
+            }).join(', ')
+            tableLines.push(`CREATE TABLE IF NOT EXISTS "${table_name}" (${colDefs});`)
+            const data = await pgQuery(`SELECT * FROM "${table_name}"`)
+            if (data.rows.length > 0) {
+                const names = cols.map(c => `"${c.column_name}"`).join(', ')
+                for (const row of data.rows) {
+                    const vals = cols.map(c => sqlVal(row[c.column_name])).join(', ')
+                    tableLines.push(`INSERT INTO "${table_name}" (${names}) VALUES (${vals});`)
+                }
+            }
+        }
+
+        localStorage.setItem(SNAP_PREFIX + folder, typeLines.join('\n') + '\n' + seqLines.join('\n') + '\n' + tableLines.join('\n'))
+    } catch(e) {}
+}
+
+function sqlVal(v) {
+    if (v === null || v === undefined) return 'DEFAULT'
+    if (typeof v === 'number') return String(v)
+    if (typeof v === 'boolean') return String(v)
+    if (typeof v === 'object') return `'${JSON.stringify(v).replace(/'/g, "''")}'`
+    return `'${String(v).replace(/'/g, "''")}'`
+}
+
+async function restoreSnapshot(folder) {
+    const saved = localStorage.getItem(SNAP_PREFIX + folder)
+    if (saved) {
+        try {
+            await pgExec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
+            const result = await pgExec(saved)
+            const hasError = result.some(r => r.type === 'error')
+            if (hasError) { localStorage.removeItem(SNAP_PREFIX + folder); return false }
+            return true
+        } catch(e) { return false }
+    }
+    return false
+}
+
+async function runSetup(folder) {
+    await pgExec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
+    const resp = await fetch('challenges/' + folder + '/setup.sql')
+    if (!resp.ok) return
+    const sql = await resp.text()
+    if (!sql.trim()) return
+    try { await pgExec(sql) } catch(e) {}
 }
 
 // ── Schema (autocomplete) ───────────────────────────
@@ -505,9 +609,21 @@ async function loadSchema() {
         for (const row of result.rows) {
             if (!tables[row.table_name]) tables[row.table_name] = []
             tables[row.table_name].push(row.column_name)
+            tables[row.column_name] = []
         }
-        if (editor) editor.setOption('hintOptions', { tables, completeSingle: false })
-    } catch(e) {}
+        schemaTables = tables
+        if (editor) {
+            editor.setOption('hintOptions', { tables, completeSingle: false })
+        }
+    } catch(e) {
+        console.error('loadSchema failed:', e)
+    }
+}
+
+window.checkSchema = function() {
+    console.log('schemaTables:', JSON.stringify(schemaTables))
+    console.log('hintOptions:', editor && JSON.stringify(editor.options.hintOptions?.tables ? Object.keys(editor.options.hintOptions.tables) : 'not set'))
+    return schemaTables
 }
 
 // ── Run SQL ─────────────────────────────────────────
@@ -515,6 +631,7 @@ async function loadSchema() {
 window.runSQL = async function() {
     if (!editor) return
     saveEditorContent()
+    const folder = currentFolder
     const sql = editor.getValue()
     if (!sql.trim()) return
 
@@ -567,7 +684,10 @@ window.runSQL = async function() {
         }
     })
 
-    if (!hasError && currentFolder) loadSchema()
+    if (!hasError && folder) {
+        loadSchema()
+        await saveSnapshot(folder)
+    }
 }
 
 // ── Verify ──────────────────────────────────────────
@@ -575,6 +695,7 @@ window.runSQL = async function() {
 window.verifySQL = async function() {
     if (!editor || !currentFolder) return
     saveEditorContent()
+    const folder = currentFolder
     const userSql = editor.getValue().trim()
     if (!userSql) return
 
@@ -586,18 +707,19 @@ window.verifySQL = async function() {
     $('verify-result').style.display = 'none'
 
     try {
-        const result = await verifyChallenge(currentFolder, userSql)
+        const result = await verifyChallenge(folder, userSql)
         btn.disabled = false
         btn.textContent = 'Verify'
 
         const vr = $('verify-result')
-        vr.style.display = 'block'
+        vr.style.display = ''
 
         if (result.passed) {
             vr.className = 'verify-result verify-pass'
             vr.innerHTML = `<span class="verify-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#a6e22e" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#a6e22e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${esc(result.message)}</span>`
-            markComplete(currentFolder)
+            markComplete(folder)
             loadSchema()
+            saveSnapshot(folder)
         } else {
             vr.className = 'verify-result verify-fail'
             vr.innerHTML = `<span class="verify-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#ff297b" stroke-width="1.5"/><path d="M5 5l6 6M11 5l-6 6" stroke="#ff297b" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>${esc(result.message)}</span>`
@@ -621,7 +743,7 @@ window.verifySQL = async function() {
         btn.disabled = false
         btn.textContent = 'Verify'
         const vr = $('verify-result')
-        vr.style.display = 'block'
+        vr.style.display = ''
         vr.className = 'verify-result verify-fail'
         vr.innerHTML = `<span class="verify-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#ff297b" stroke-width="1.5"/><path d="M5 5l6 6M11 5l-6 6" stroke="#ff297b" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Error: ${esc(e.message)}</span>`
     }
@@ -846,20 +968,37 @@ async function psqlTable(container, sql, label) {
         container.innerHTML = `<div class="execute-ok">No results</div>`; return
     }
     container.innerHTML = ''
-    const block = document.createElement('div')
-    block.className = 'result-block'
-    block.innerHTML = `<div class="result-label">${esc(label)} (${r.row_count} rows)</div>
-        <table class="result-table"><thead><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
-        <tbody>${r.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-    container.appendChild(block)
+    if (psqlExpanded) {
+        r.rows.forEach((row, i) => {
+            const rec = document.createElement('div')
+            rec.className = 'expanded-record'
+            rec.innerHTML = `<div class="expanded-header">-[ RECORD ${i + 1} ]--</div>` +
+                row.map((val, j) =>
+                    `<div class="expanded-row"><span class="expanded-field">${esc(r.columns[j])}</span><span class="expanded-val">${esc(val || '')}</span></div>`
+                ).join('')
+            container.appendChild(rec)
+        })
+    } else {
+        const block = document.createElement('div')
+        block.className = 'result-block'
+        block.innerHTML = `<div class="result-label">${esc(label)} (${r.row_count} rows)</div>
+            <table class="result-table"><thead><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+            <tbody>${r.rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+        container.appendChild(block)
+    }
 }
 
 // ── Beautify ────────────────────────────────────────
 
 window.beautifySQL = function() {
     if (!editor) return
-    for (let i = 0; i < editor.lineCount(); i++) editor.indentLine(i, 'smart')
-    showSaveIndicator('manual')
+    const sql = editor.getValue()
+    if (!sql.trim()) return
+    try {
+        const formatted = sqlFormatter.format(sql, { language: 'postgresql', keywordCase: 'upper', tabWidth: 4 })
+        editor.setValue(formatted)
+        showSaveIndicator('manual')
+    } catch(e) {}
 }
 
 function duplicateLine(cm) {
@@ -977,6 +1116,7 @@ window.confirmRestore = async function(checkpoint) {
             setTimeout(() => { $('restore-progress-overlay').style.display = 'none' }, 1500)
         }
         loadChallenges()
+        if (currentFolder) saveSnapshot(currentFolder)
     } catch(e) {
         body.innerHTML = `<div class="error-msg">${esc(e.message)}</div>`
         setTimeout(() => { $('restore-progress-overlay').style.display = 'none' }, 3000)
@@ -994,7 +1134,11 @@ function esc(text) {
 
 // ── Boot ────────────────────────────────────────────
 
-loadChallenges()
+;(async () => {
+    await loadChallenges()
+    const saved = localStorage.getItem('pgkata_current')
+    if (saved) selectChallenge(saved)
+})()
 </script>
 </body>
 </html>

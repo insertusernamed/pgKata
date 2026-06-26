@@ -169,6 +169,7 @@ body {
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
+    position: relative;
 }
 
 .editor-section {
@@ -1122,4 +1123,248 @@ li.CodeMirror-hint-active {
     font-size: 12px;
     color: var(--text-muted);
     text-align: center;
+}
+
+/* ── Results Tabs ────────────────────────────────── */
+
+.results-tabs {
+    display: flex;
+    gap: 0;
+    align-items: center;
+}
+
+.results-tab {
+    font: inherit;
+    font-size: 10px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-right: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.results-tab:first-child {
+    border-radius: 3px 0 0 3px;
+}
+
+.results-tab:last-of-type {
+    border-radius: 0 3px 3px 0;
+    border-right: 1px solid var(--border);
+}
+
+.results-tab:hover {
+    background: var(--surface-alt);
+    color: var(--text);
+}
+
+.results-tab.active {
+    background: var(--primary);
+    color: #272822;
+    font-weight: 600;
+    border-color: var(--primary);
+}
+
+/* ── Schema Visualizer ───────────────────────────── */
+
+.schema-graph {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+    cursor: grab;
+}
+
+.schema-graph:active {
+    cursor: grabbing;
+}
+
+.schema-graph-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.schema-graph-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.schema-graph-card {
+    position: absolute;
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+    transition: box-shadow 0.15s;
+}
+
+.schema-graph-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.schema-graph-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    font-family: var(--mono);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schema-graph-card-header svg {
+    flex-shrink: 0;
+}
+
+.schema-graph-col {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    font-family: var(--mono);
+    font-size: 11px;
+}
+
+.schema-graph-col:last-child {
+    border-bottom: none;
+}
+
+.schema-graph-col:hover {
+    background: var(--surface-alt);
+}
+
+.schema-graph-col-badge {
+    width: 18px;
+    height: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.schema-graph-col-badge svg {
+    display: block;
+    width: 12px;
+    height: 12px;
+}
+
+.schema-graph-col-badge.pk {
+    color: #e6db74;
+}
+
+.schema-graph-col-badge.fk {
+    color: #66d9ef;
+}
+
+.schema-graph-col-name {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.schema-graph-col-type {
+    color: var(--text-muted);
+    margin-left: auto;
+    font-size: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.schema-graph-col-notnull {
+    color: #ff297b;
+    font-size: 9px;
+    margin-left: 1px;
+}
+
+.schema-graph-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.schema-graph-line {
+    fill: none;
+    stroke: #66d9ef;
+    stroke-width: 1.5;
+    opacity: 0.75;
+    pointer-events: stroke;
+    cursor: pointer;
+    transition: opacity 0.15s, stroke-width 0.15s;
+}
+
+.schema-graph-line:hover {
+    opacity: 1;
+    stroke: #66d9ef;
+    stroke-width: 2.5;
+}
+
+.schema-graph-arrow {
+    fill: #66d9ef;
+}
+
+.schema-graph-zoom {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+}
+
+.schema-graph-zoom-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    line-height: 1;
+    user-select: none;
+}
+
+.schema-graph-zoom-btn:hover {
+    background: var(--surface-alt);
+}
+
+.schema-graph-zoom-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    font-family: var(--mono);
 }

@@ -67,7 +67,10 @@
         <div class="split-handle" id="split-handle"></div>
         <div class="results-section" id="results-section">
             <div class="results-header">
-                <span>Results</span>
+                <div class="results-tabs">
+                    <span class="results-tab active" data-tab="results" onclick="window.switchResultsTab('results')">Results</span>
+                    <span class="results-tab" data-tab="schema" onclick="window.switchResultsTab('schema')">Schema</span>
+                </div>
                 <span id="results-time"></span>
             </div>
             <div class="psql-bar">
@@ -94,6 +97,7 @@
             </div>
             <div class="results-content" id="results-content"><div id="hint-content" class="hint-container" style="display:none"></div><div id="verify-result" style="display:none"></div>
         </div>
+        <div class="schema-graph" id="schema-graph" style="display:none"></div>
     </main>
 </div>
 
@@ -253,6 +257,14 @@ function initSplitPane() {
         const es = document.querySelector('.editor-section')
         if (es) { es.style.flex = 'none'; es.style.height = Math.max(50, editorH) + 'px' }
         results.style.height = resultsH + 'px'; results.style.flex = 'none'
+        // ponytail: keep schema-graph position + saved height in sync during resize
+        if ($('schema-graph').style.display !== 'none') {
+            _savedRsHeight = resultsH + 'px'
+            results.style.height = '33px'
+            const tabs = document.querySelector('.results-header')
+            const top = Math.max(50, editorH) + (handleH || 4) + (tabs?.offsetHeight ?? 33)
+            $('schema-graph').style.top = top + 'px'
+        }
     }
     function onDown(e) { splitDragging = true; handle.classList.add('active'); e.preventDefault() }
     function onMove(e) {
@@ -535,6 +547,8 @@ async function switchChallenge(folder, prev) {
 }
 
 async function saveSnapshot(folder) {
+    // ponytail: each section individually caught so one query failure doesnt kill the save
+    const parts = []
     try {
         const typeLines = []
         const enums = await pgQuery("SELECT t.typname, e.enumlabel FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid JOIN pg_namespace n ON t.typnamespace = n.oid WHERE n.nspname = 'public' ORDER BY t.typname, e.enumsortorder")
@@ -548,51 +562,62 @@ async function saveSnapshot(folder) {
             vals.push(row.enumlabel)
         }
         if (vals.length) typeLines.push(`CREATE TYPE "${lastType}" AS ENUM (${vals.map(v => `'${v.replace(/'/g, "''")}'`).join(', ')});`)
-
+        if (typeLines.length) parts.push(typeLines.join('\n'))
+    } catch(e) {}
+    try {
         const seqs = await pgQuery("SELECT sequence_name, data_type, start_value, increment FROM information_schema.sequences WHERE sequence_schema = 'public'")
         const seqLines = []
         for (const s of seqs.rows) {
             seqLines.push(`CREATE SEQUENCE IF NOT EXISTS "${s.sequence_name}" AS ${s.data_type} START WITH ${s.start_value} INCREMENT BY ${s.increment};`)
-            const r = await pgQuery(`SELECT last_value FROM "${s.sequence_name}"`)
-            if (r.rows.length > 0) seqLines.push(`SELECT setval('"${s.sequence_name}"', ${r.rows[0].last_value}, true);`)
+            try {
+                const r = await pgQuery(`SELECT last_value FROM "${s.sequence_name}"`)
+                if (r.rows.length > 0) seqLines.push(`SELECT setval('"${s.sequence_name}"', ${r.rows[0].last_value}, true);`)
+            } catch(e) {}
         }
-
+        if (seqLines.length) parts.push(seqLines.join('\n'))
+    } catch(e) {}
+    try {
         const tables = await pgQuery("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
         const tableLines = []
         for (const {table_name} of tables.rows) {
-            const info = await pgQuery(`SELECT column_name, data_type, is_nullable, column_default, character_maximum_length, numeric_precision, numeric_scale, udt_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${table_name.replace(/'/g, "''")}' ORDER BY ordinal_position`)
-            const cols = info.rows
-            const colDefs = cols.map(c => {
-                let t = c.data_type === 'USER-DEFINED' ? c.udt_name : c.data_type
-                if (t === 'character varying' && c.character_maximum_length) t = `character varying(${c.character_maximum_length})`
-                if (t === 'numeric' && c.numeric_precision != null) t = c.numeric_scale != null ? `numeric(${c.numeric_precision},${c.numeric_scale})` : `numeric(${c.numeric_precision})`
-                let def = `"${c.column_name}" ${t}`
-                if (c.is_nullable === 'NO') def += ' NOT NULL'
-                if (c.column_default) def += ` DEFAULT ${c.column_default}`
-                return def
-            }).join(', ')
-            tableLines.push(`CREATE TABLE IF NOT EXISTS "${table_name}" (${colDefs});`)
-            const data = await pgQuery(`SELECT * FROM "${table_name}"`)
-            if (data.rows.length > 0) {
-                const names = cols.map(c => `"${c.column_name}"`).join(', ')
-                for (const row of data.rows) {
-                    const vals = cols.map(c => sqlVal(row[c.column_name])).join(', ')
-                    tableLines.push(`INSERT INTO "${table_name}" (${names}) VALUES (${vals});`)
+            try {
+                const info = await pgQuery(`SELECT column_name, data_type, is_nullable, column_default, character_maximum_length, numeric_precision, numeric_scale, udt_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${table_name.replace(/'/g, "''")}' ORDER BY ordinal_position`)
+                const cols = info.rows
+                const colDefs = cols.map(c => {
+                    let t = c.data_type === 'USER-DEFINED' ? c.udt_name : c.data_type
+                    if (t === 'character varying' && c.character_maximum_length) t = `character varying(${c.character_maximum_length})`
+                    if (t === 'numeric' && c.numeric_precision != null) t = c.numeric_scale != null ? `numeric(${c.numeric_precision},${c.numeric_scale})` : `numeric(${c.numeric_precision})`
+                    let def = `"${c.column_name}" ${t}`
+                    if (c.is_nullable === 'NO') def += ' NOT NULL'
+                    if (c.column_default) def += ` DEFAULT ${c.column_default}`
+                    return def
+                }).join(', ')
+                tableLines.push(`CREATE TABLE IF NOT EXISTS "${table_name}" (${colDefs});`)
+                const data = await pgQuery(`SELECT * FROM "${table_name}"`)
+                if (data.rows.length > 0) {
+                    const names = cols.map(c => `"${c.column_name}"`).join(', ')
+                    for (const row of data.rows) {
+                        const vals = cols.map(c => sqlVal(row[c.column_name])).join(', ')
+                        tableLines.push(`INSERT INTO "${table_name}" (${names}) VALUES (${vals});`)
+                    }
                 }
-            }
+            } catch(e) {}
         }
-
-        // ponytail: capture PK/FK/UNIQUE constraints via pg_get_constraintdef
-        const conLines = []
-        try {
-            const cons = await pgQuery(`SELECT con.conname, cls.relname AS t, pg_catalog.pg_get_constraintdef(con.oid) AS def FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid=cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace=n.oid WHERE n.nspname='public' AND con.contype IN ('p','u','f') ORDER BY cls.relname, con.conname`)
-            for (const r of cons.rows) {
-                conLines.push(`ALTER TABLE "${r.t}" ADD CONSTRAINT "${r.conname}" ${r.def};`)
-            }
-        } catch(e) {}
-
-        localStorage.setItem(SNAP_PREFIX + folder, typeLines.join('\n') + '\n' + seqLines.join('\n') + '\n' + tableLines.join('\n') + '\n' + conLines.join('\n'))
+        if (tableLines.length) parts.push(tableLines.join('\n'))
     } catch(e) {}
+    try {
+        const cons = await pgQuery(`SELECT con.conname, cls.relname AS t, pg_catalog.pg_get_constraintdef(con.oid) AS def, con.contype FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid=cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace=n.oid WHERE n.nspname='public' AND con.contype IN ('p','u','f') ORDER BY cls.relname, con.conname`)
+        const pkLines = [], fkLines = []
+        for (const r of cons.rows) {
+            const line = `ALTER TABLE "${r.t}" ADD CONSTRAINT "${r.conname}" ${r.def};`
+            if (r.contype === 'f') fkLines.push(line)
+            else pkLines.push(line)
+        }
+        const all = pkLines.concat(fkLines)
+        if (all.length) parts.push(all.join('\n'))
+    } catch(e) {}
+    const sql = parts.join('\n')
+    localStorage.setItem(SNAP_PREFIX + folder, sql)
 }
 
 function sqlVal(v) {
@@ -609,12 +634,67 @@ async function restoreSnapshot(folder) {
         try {
             await pgExec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
             const result = await pgExec(saved)
-            const hasError = result.some(r => r.type === 'error')
-            if (hasError) { localStorage.removeItem(SNAP_PREFIX + folder); return false }
+            const errors = result.filter(r => r.type === 'error')
+            if (errors.length) {
+                localStorage.removeItem(SNAP_PREFIX + folder)
+                return false
+            }
             return true
         } catch(e) { return false }
     }
     return false
+}
+
+// ── Diagnostics ──────────────────────────────────────
+window.pgSnapshotDebug = function(folder) {
+    folder = folder || '__sandbox__'
+    const key = SNAP_PREFIX + folder
+    const raw = localStorage.getItem(key)
+    if (!raw) return console.warn('[pgKata:debug] no snapshot for', folder)
+    const lines = raw.split('\n')
+    const createCount = lines.filter(l => l.startsWith('CREATE')).length
+    const alterCount = lines.filter(l => l.startsWith('ALTER')).length
+    const insertCount = lines.filter(l => l.startsWith('INSERT')).length
+    console.warn('[pgKata:debug] snapshot for', folder, {
+        key, chars: raw.length, lines: lines.length,
+        create_table: createCount, alter_constraint: alterCount, insert_rows: insertCount
+    })
+    console.warn('[pgKata:debug] first 200 chars:', raw.slice(0, 200))
+    console.warn('[pgKata:debug] last 200 chars:', raw.slice(-200))
+    return { key, raw, summary: { createCount, alterCount, insertCount } }
+}
+
+window.pgSnapshotTest = async function() {
+    console.warn('[pgKata:test] starting snapshot test')
+    try {
+        await pgExec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
+        await pgExec('CREATE TABLE pgkata_test (id SERIAL PRIMARY KEY, val INT); INSERT INTO pgkata_test (val) VALUES (42);')
+        const tables = await pgQuery("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")
+        console.warn('[pgKata:test] tables after create:', tables.rows.map(r => r.table_name))
+
+        await saveSnapshot('__sandbox__')
+        const raw = localStorage.getItem(SNAP_PREFIX + '__sandbox__')
+        console.warn('[pgKata:test] snapshot saved, length:', raw?.length ?? 0)
+
+        if (raw) {
+            await pgExec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
+            const cr = await pgExec(raw)
+            const errors = cr.filter(r => r.type === 'error')
+            if (errors.length) {
+                console.error('[pgKata:test] replay errors:', errors.map(e => e.error))
+                return { passed: false, errors: errors.map(e => e.error) }
+            }
+            const restored = await pgQuery("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")
+            console.warn('[pgKata:test] restored tables:', restored.rows.map(r => r.table_name))
+            console.warn('[pgKata:test] snapshot test', restored.rows.length > 0 ? 'PASSED' : 'FAILED')
+            return { passed: restored.rows.length > 0, tables: restored.rows.map(r => r.table_name) }
+        }
+        console.error('[pgKata:test] snapshot was NOT saved!')
+        return { passed: false, error: 'snapshot not saved' }
+    } catch(e) {
+        console.error('[pgKata:test] exception:', e.message)
+        return { passed: false, error: e.message }
+    }
 }
 
 async function runSetup(folder) {
@@ -850,7 +930,6 @@ window.runSQL = async function() {
     const btn = $('run-btn')
     btn.disabled = true
     btn.innerHTML = '<span class="loading-spinner"></span>'
-    $('results-section').style.display = 'block'
     setRC()
     $('verify-result').style.display = 'none'
 
@@ -864,6 +943,7 @@ window.runSQL = async function() {
 
     if (results.length === 0) {
         setRC('<div class="execute-ok">No results</div>')
+        switchResultsTab('results')
         return
     }
 
@@ -901,6 +981,8 @@ window.runSQL = async function() {
         if (sandboxMode) { loadSchemaBrowser(); await saveSnapshot('__sandbox__') }
         else if (folder) await saveSnapshot(folder)
     }
+
+    switchResultsTab('results')
 }
 
 // ── Verify ──────────────────────────────────────────
@@ -915,9 +997,10 @@ window.verifySQL = async function() {
     const btn = $('verify-btn')
     btn.disabled = true
     btn.innerHTML = '<span class="loading-spinner"></span>'
-    $('results-section').style.display = 'block'
     setRC()
     $('verify-result').style.display = 'none'
+
+
 
     try {
         const result = await verifyChallenge(folder, userSql)
@@ -1078,7 +1161,6 @@ window.runPsql = async function() {
     const cmd = input.value.trim()
     if (!cmd) return
 
-    $('results-section').style.display = 'block'
     const container = $('results-content')
 
     if (cmd.startsWith('\\')) {
@@ -1211,6 +1293,246 @@ function renderTable(container, label, columns, rows) {
     }
 }
 
+// ── Schema Visualizer ─────────────────────────────
+
+let _savedRsHeight = null
+
+window.switchResultsTab = function(tab) {
+    document.querySelectorAll('.results-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab))
+    const results = $('results-content')
+    const graph = $('schema-graph')
+    const rs = $('results-section')
+    const psql = document.querySelector('.psql-bar')
+    const showingSchema = tab === 'schema'
+
+    results.style.display = showingSchema ? 'none' : ''
+    if (psql) psql.style.display = showingSchema ? 'none' : ''
+
+    if (showingSchema) {
+        _savedRsHeight = rs.style.height
+        const editor = document.querySelector('.editor-section')
+        const handle = document.querySelector('.split-handle')
+        const tabs = document.querySelector('.results-header')
+        const top = (editor?.offsetHeight ?? 0) + (handle?.offsetHeight ?? 0) + (tabs?.offsetHeight ?? 0)
+        graph.style.position = 'absolute'
+        graph.style.top = top + 'px'
+        graph.style.left = '0'
+        graph.style.right = '0'
+        graph.style.bottom = '0'
+        graph.style.display = ''
+    } else {
+        if (_savedRsHeight) {
+            rs.style.height = _savedRsHeight
+        }
+        graph.style.position = ''
+        graph.style.top = ''
+        graph.style.left = ''
+        graph.style.right = ''
+        graph.style.bottom = ''
+        graph.style.display = 'none'
+    }
+
+    if (showingSchema) renderSchemaGraph()
+}
+
+let schemaZoom = 1, schemaPanX = 0, schemaPanY = 0
+
+async function renderSchemaGraph() {
+    const container = $('schema-graph')
+    if (!container) return
+    try {
+        const tables = await pgQuery("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY table_name")
+        if (!tables.rows.length) {
+            container.innerHTML = '<div class="schema-graph-empty">No tables yet. Create one to see your schema.</div>'
+            return
+        }
+        const [cr, conr, fkr] = await Promise.all([
+            pgQuery("SELECT table_name, column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name, ordinal_position"),
+            pgQuery("SELECT con.conname, cls.relname AS table_name, a.attname AS column_name, con.contype FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid=cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace=n.oid LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=cls.oid AND a.attnum=ANY(con.conkey) WHERE n.nspname='public' AND con.contype IN ('p','f')").catch(()=>({rows:[]})),
+            pgQuery("SELECT DISTINCT kcu.table_name, kcu.column_name, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = 'public'").catch(()=>({rows:[]}))
+        ])
+
+        const pk = {}, fk = {}, fkMap = {}
+        if (conr.rows) conr.rows.forEach(r => {
+            if (!r.column_name) return
+            const k = r.table_name + '|' + r.column_name
+            if (r.contype === 'p') pk[k] = true
+            else if (r.contype === 'f') fk[k] = true
+        })
+        if (fkr.rows) fkr.rows.forEach(r => {
+            const k = r.table_name + '|' + r.column_name
+            if (!fkMap[r.table_name]) fkMap[r.table_name] = {}
+            fkMap[r.table_name][r.column_name] = { table: r.foreign_table_name, column: r.foreign_column_name }
+        })
+
+        const colMap = {}
+        if (cr.rows) cr.rows.forEach(r => {
+            if (!colMap[r.table_name]) colMap[r.table_name] = []
+            colMap[r.table_name].push({
+                name: r.column_name, type: r.data_type,
+                nullable: r.is_nullable === 'YES',
+                isPK: !!pk[r.table_name + '|' + r.column_name],
+                isFK: !!fk[r.table_name + '|' + r.column_name],
+                ref: fkMap[r.table_name] ? fkMap[r.table_name][r.column_name] : null
+            })
+        })
+
+        const CARD_W = 220, GAP_X = 60, GAP_Y = 50, PAD = 40
+        const tableList = tables.rows.map(t => ({
+            name: t.table_name, columns: colMap[t.table_name] || [],
+            h: 30 + (colMap[t.table_name] || []).length * 24
+        }))
+        tableList.sort((a, b) => b.columns.filter(c => c.isFK).length - a.columns.filter(c => c.isFK).length || a.name.localeCompare(b.name))
+        const n = tableList.length
+        const cols = Math.max(1, Math.min(n, Math.ceil(Math.sqrt(n * 1.2))))
+        const rows = Math.ceil(n / cols)
+        const rowH = []
+        tableList.forEach((t,i) => {
+            const c = Math.floor(i / rows), r = i % rows
+            rowH[r] = Math.max(rowH[r]||0, t.h)
+        })
+        const colHeights = Array(cols).fill(0)
+        tableList.forEach((t,i) => {
+            const c = Math.floor(i / rows), r = i % rows
+            t.x = PAD + c * (CARD_W + GAP_X)
+            const colY = PAD + (r > 0 ? rowH.slice(0, r).reduce((a, b) => a + b + GAP_Y, 0) : 0)
+            t.y = colY
+            colHeights[c] = Math.max(colHeights[c], colY + t.h + PAD)
+        })
+        const totalW = PAD + cols * (CARD_W + GAP_X) + PAD
+        const totalH = Math.max(...colHeights)
+
+        let cards = '', lines = ''
+        function routePath(x1, y1, x2, y2, edgeIndex, canvasW, tableList) {
+            const goForward = x2 > x1 + 20
+            if (goForward) {
+                const cx = (x1 + x2) / 2
+                return 'M'+x1+' '+y1+' C'+cx+' '+y1+', '+cx+' '+y2+', '+x2+' '+y2
+            }
+            const rail = canvasW - PAD + 20 + edgeIndex * 18
+            const R = 6
+            const dir = y2 >= y1 ? 1 : -1
+            const blocking = tableList.filter(t =>
+                t.x < rail &&
+                t.x + CARD_W > x2 + 10 &&
+                y2 > t.y - 10 &&
+                y2 < t.y + t.h + 10
+            )
+            if (blocking.length === 0) {
+                return 'M'+x1+' '+y1+' L'+(rail-R)+' '+y1+' Q'+rail+' '+y1+' '+rail+' '+(y1+dir*R)
+                    +' L'+rail+' '+(y2-dir*R)+' Q'+rail+' '+y2+' '+(rail-R)+' '+y2
+                    +' L'+x2+' '+y2
+            }
+            const blocker = blocking[0]
+            const clearY = dir > 0 ? blocker.y + blocker.h + 16 : blocker.y - 16
+            return 'M'+x1+' '+y1+' L'+(rail-R)+' '+y1+' Q'+rail+' '+y1+' '+rail+' '+(y1+dir*R)
+                +' L'+rail+' '+(clearY-dir*R)+' Q'+rail+' '+clearY+' '+(rail-R)+' '+clearY
+                +' L'+(x2+R)+' '+clearY+' Q'+x2+' '+clearY+' '+x2+' '+(clearY+dir*R)
+                +' L'+x2+' '+y2
+        }
+        for (const t of tableList) {
+            cards += '<div class="schema-graph-card" style="left:'+t.x+'px;top:'+t.y+'px">'
+                +'<div class="schema-graph-card-header">'+TBL_ICON+'<span>'+esc(t.name)+'</span></div><div class="schema-graph-card-body">'
+            for (const c of t.columns) {
+                const badge = c.isPK ? '<span class="schema-graph-col-badge pk">'+PK_ICON+'</span>'
+                    : c.isFK ? '<span class="schema-graph-col-badge fk">'+FK_ICON+'</span>'
+                    : '<span class="schema-graph-col-badge"></span>'
+                cards += '<div class="schema-graph-col">'+badge
+                    +'<span class="schema-graph-col-name">'+esc(c.name)+'</span>'
+                    +'<span class="schema-graph-col-type">'+esc(c.type)+(c.nullable?'':'<span class="schema-graph-col-notnull">*</span>')+'</span></div>'
+            }
+            cards += '</div></div>'
+
+            for (const c of t.columns) {
+                if (!c.isFK || !c.ref) continue
+                const target = tableList.find(tt => tt.name === c.ref.table)
+                if (!target) continue
+                const si = t.columns.indexOf(c)
+                const ti = target.columns.findIndex(tc => tc.name === c.ref.column)
+                if (ti === -1) continue
+                const x1 = t.x + CARD_W
+                const y1 = t.y + 30 + si * 24 + 12
+                const endX = target.x > t.x + 20 ? target.x : target.x + CARD_W
+                const y2 = target.y + 30 + ti * 24 + 12
+                lines += '<path class="schema-graph-line" d="'+routePath(x1, y1, endX, y2, si, totalW, tableList)+'" marker-end="url(#sg-arrow)"/>'
+            }
+        }
+
+        container.innerHTML = '<div class="schema-graph-inner" id="schema-graph-inner" style="width:'+totalW+'px;height:'+totalH+'px">'
+            +cards
+            +'<svg class="schema-graph-svg" style="width:'+totalW+'px;height:'+totalH+'px">'
+            +'<defs><marker id="sg-arrow" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="10" markerHeight="7" orient="auto"><path d="M0 0 L11 4 L0 8" class="schema-graph-arrow"/></marker></defs>'
+            +lines+'</svg></div>'
+            +'<div class="schema-graph-zoom"><button class="schema-graph-zoom-btn" onclick="window.zoomSchemaGraph(-0.2)">−</button>'
+            +'<span class="schema-graph-zoom-label" id="schema-zoom-label">100%</span>'
+            +'<button class="schema-graph-zoom-btn" onclick="window.zoomSchemaGraph(0.2)">+</button>'
+            +'<button class="schema-graph-zoom-btn" onclick="window.fitSchemaGraph()" title="Fit">⊡</button></div>'
+
+        container.dataset.rendered = '1'
+        setupSchemaGraphPanZoom(container, totalW, totalH)
+    } catch(e) {
+        container.innerHTML = '<div class="schema-graph-empty">Error: '+esc(e.message)+'</div>'
+    }
+}
+
+function setupSchemaGraphPanZoom(container, totalW, totalH) {
+    const inner = $('schema-graph-inner')
+    if (!inner) return
+    const rect = container.getBoundingClientRect()
+    const s = Math.min((rect.width - 40) / totalW, (rect.height - 40) / totalH, 1.5)
+    schemaZoom = Math.max(0.3, Math.min(s, 3))
+    schemaPanX = Math.max(0, (rect.width - totalW * schemaZoom) / 2)
+    schemaPanY = Math.max(0, (rect.height - totalH * schemaZoom) / 2)
+    applySchemaTransform(inner)
+    updateZoomLabel()
+
+    let panning = false, sx, sy
+    container.onmousedown = function(e) {
+        if (e.target.closest('.schema-graph-zoom') || e.target.closest('.schema-graph-card')) return
+        panning = true; sx = e.clientX - schemaPanX; sy = e.clientY - schemaPanY
+        container.style.cursor = 'grabbing'; e.preventDefault()
+    }
+    container.onmousemove = function(e) {
+        if (!panning) return
+        schemaPanX = e.clientX - sx; schemaPanY = e.clientY - sy
+        applySchemaTransform(inner)
+    }
+    container.onmouseup = container.onmouseleave = function() { panning = false; container.style.cursor = 'grab' }
+    container.onwheel = function(e) {
+        e.preventDefault()
+        schemaZoom = Math.max(0.3, Math.min(schemaZoom + (e.deltaY > 0 ? -0.08 : 0.08), 3))
+        applySchemaTransform(inner); updateZoomLabel()
+    }
+}
+
+window.zoomSchemaGraph = function(delta) {
+    const inner = $('schema-graph-inner')
+    if (!inner) return
+    schemaZoom = Math.max(0.3, Math.min(schemaZoom + delta, 3))
+    applySchemaTransform(inner); updateZoomLabel()
+}
+
+window.fitSchemaGraph = function() {
+    const container = $('schema-graph')
+    const inner = $('schema-graph-inner')
+    if (!inner) return
+    const rect = container.getBoundingClientRect()
+    const w = parseFloat(inner.style.width) || 800, h = parseFloat(inner.style.height) || 600
+    schemaZoom = Math.max(0.3, Math.min((rect.width - 40) / w, (rect.height - 40) / h, 1.5))
+    schemaPanX = Math.max(0, (rect.width - w * schemaZoom) / 2)
+    schemaPanY = Math.max(0, (rect.height - h * schemaZoom) / 2)
+    applySchemaTransform(inner); updateZoomLabel()
+}
+
+function applySchemaTransform(el) {
+    el.style.transform = 'translate('+schemaPanX+'px,'+schemaPanY+'px) scale('+schemaZoom+')'
+}
+
+function updateZoomLabel() {
+    const l = $('schema-zoom-label')
+    if (l) l.textContent = Math.round(schemaZoom * 100) + '%'
+}
+
 // ── Beautify ────────────────────────────────────────
 
 window.beautifySQL = function() {
@@ -1237,7 +1559,6 @@ function duplicateLine(cm) {
 
 window.resetDB = async function() {
     if (!confirm('This will drop all tables in pgKata. All data will be lost. Continue?')) return
-    $('results-section').style.display = 'block'
     setRC('<div class="execute-ok">Resetting database...</div>')
     try {
         await ensureDB()

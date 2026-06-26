@@ -30,9 +30,22 @@ Covers SELECT, JOIN, GROUP BY, subqueries, window functions, JSONB, arrays, full
 - **Restore**: reset the database and replay all setup SQL up to a chosen checkpoint.
 - **Auto-save**: editor content persists to localStorage. Progress persists across visits.
 - **Indent controls**: spaces or tabs, configurable width.
+- **Beautify**: format SQL with sql-formatter.
+- **Sandbox mode**: free-form SQL workspace with script management and schema browser.
+- **Schema visualizer**: interactive entity-relationship diagram with pan, zoom, fit, and FK routing.
+- **Snapshot persistence**: database state saved to IndexedDB and restored across page reloads.
 
 ## How it works
 
 [PGlite](https://github.com/electric-sql/pglite) is a full PostgreSQL compiled to WebAssembly. It runs inside the page, no server needed. The database persists to IndexedDB across sessions.
 
 The page is a single HTML file with no build step. PGlite and CodeMirror load from CDN. Challenge files are fetched as static JSON and SQL.
+
+## Schema Visualizer
+
+Click the **Schema** tab in the results pane to see an interactive ERD of your database:
+
+- **Pan**: click and drag the background.
+- **Zoom**: scroll wheel or the +/− buttons.
+- **Fit**: auto-zoom to fit all tables.
+- **Cards** show each table with PK and FK badges.

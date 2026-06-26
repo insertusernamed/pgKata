@@ -713,6 +713,7 @@ li.CodeMirror-hint-active {
 
 .verify-result {
     padding: 10px 16px;
+    margin-bottom: 12px;
     font-size: 13px;
     font-weight: 600;
     display: flex;
@@ -811,6 +812,7 @@ li.CodeMirror-hint-active {
 
 .hint-container {
     padding: 10px 16px;
+    margin-bottom: 12px;
     border-bottom: 1px solid var(--border);
     background: #2e2b1a;
 }

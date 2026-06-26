@@ -83,9 +83,7 @@
         </datalist>
                 <button class="btn psql-btn" onclick="window.runPsql()">Run</button>
             </div>
-            <div id="verify-result" style="display:none"></div>
-            <div id="hint-content" class="hint-container" style="display:none"></div>
-            <div class="results-content" id="results-content"></div>
+            <div class="results-content" id="results-content"><div id="hint-content" class="hint-container" style="display:none"></div><div id="verify-result" style="display:none"></div>
         </div>
     </main>
 </div>
@@ -155,6 +153,16 @@ let schemaTables = {}
 const PROGRESS_KEY = 'pgkata_progress'
 
 function $(id) { return document.getElementById(id) }
+
+// ponytail: preserve hint-content and verify-result through innerHTML clears
+function setRC(html) {
+    const rc = $('results-content')
+    const hc = $('hint-content')
+    const vr = $('verify-result')
+    rc.innerHTML = html ?? ''
+    rc.insertBefore(vr, rc.firstChild)
+    rc.insertBefore(hc, rc.firstChild)
+}
 
 // ── PGlite ──────────────────────────────────────────
 
@@ -492,9 +500,9 @@ async function loadFolder(folder, prev) {
     if (!saved) { setTimeout(() => editor.execCommand('selectAll'), 50) }
     editor.refresh()
     startAutosave()
-    $('results-content').innerHTML = ''
     $('hint-content').style.display = 'none'
     $('hint-content').innerHTML = ''
+    setRC()
     $('verify-result').style.display = 'none'
     await switchChallenge(folder, prev)
 }
@@ -660,7 +668,7 @@ window.runSQL = async function() {
     btn.disabled = true
     btn.innerHTML = '<span class="loading-spinner"></span>'
     $('results-section').style.display = 'block'
-    $('results-content').innerHTML = ''
+    setRC()
     $('verify-result').style.display = 'none'
 
     const startTime = performance.now()
@@ -671,12 +679,12 @@ window.runSQL = async function() {
     btn.disabled = false
     btn.textContent = 'Run'
 
-    const container = $('results-content')
-
     if (results.length === 0) {
-        container.innerHTML = '<div class="execute-ok">No results</div>'
+        setRC('<div class="execute-ok">No results</div>')
         return
     }
+
+    const container = $('results-content')
 
     let hasError = false
     results.forEach(r => {
@@ -724,7 +732,7 @@ window.verifySQL = async function() {
     btn.disabled = true
     btn.innerHTML = '<span class="loading-spinner"></span>'
     $('results-section').style.display = 'block'
-    $('results-content').innerHTML = ''
+    setRC()
     $('verify-result').style.display = 'none'
 
     try {
@@ -894,14 +902,14 @@ window.runPsql = async function() {
         const main = parts[0].toLowerCase()
 
         if (main === '\\?') {
-            container.innerHTML = `<div class="psql-result-text">${esc(PSQL_HELP)}</div>`; return
+            setRC(`<div class="psql-result-text">${esc(PSQL_HELP)}</div>`); return
         }
         if (main === '\\x') {
             psqlExpanded = !psqlExpanded
-            container.innerHTML = `<div class="execute-ok">Expanded display is ${psqlExpanded ? 'on' : 'off'}.</div>`; return
+            setRC(`<div class="execute-ok">Expanded display is ${psqlExpanded ? 'on' : 'off'}.</div>`); return
         }
         if (main === '\\conninfo') {
-            container.innerHTML = `<div class="psql-result-text">You are connected to database "pgkata" as user "pglite" via PostgreSQL (WASM) at version ${pg ? '16' : '?'}.</div>`; return
+            setRC(`<div class="psql-result-text">You are connected to database "pgkata" as user "pglite" via PostgreSQL (WASM) at version ${pg ? '16' : '?'}.</div>`); return
         }
 
         const tableCmds = {
@@ -925,7 +933,7 @@ window.runPsql = async function() {
             const typeResult = await pgQuery(`SELECT relkind FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid WHERE c.relname = '${name}' AND n.nspname NOT IN ('pg_catalog', 'information_schema')`)
             if (typeResult.rows.length > 0) {
                 const relkind = typeResult.rows[0].relkind
-                container.innerHTML = ''
+                setRC()
                 if (relkind === 'r' || relkind === 'v' || relkind === 'm' || relkind === 'f' || relkind === 'p') {
                     const r = await tryPsqlQuery(`SELECT column_name AS "Column", data_type AS "Type", CASE WHEN is_nullable = 'YES' THEN 'YES' ELSE 'NO' END AS "Nullable", COALESCE(column_default, '') AS "Default" FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${name}' ORDER BY ordinal_position`)
                     if (r) renderTable(container, `Table "public.${esc(parts[parts.length - 1])}"`, r.columns, r.rows)
@@ -940,7 +948,7 @@ window.runPsql = async function() {
                 }
                 return
             }
-            container.innerHTML = `<div class="error-msg">Did not find any relation named "${esc(parts[parts.length - 1])}".</div>`; return
+            setRC(`<div class="error-msg">Did not find any relation named "${esc(parts[parts.length - 1])}".</div>`); return
         }
 
         if (main === '\\d' || main === '\\d+') {
@@ -951,16 +959,16 @@ window.runPsql = async function() {
             return psqlTable(container, q, 'List of relations')
         }
 
-        container.innerHTML = `<div class="error-msg">Unknown command: ${esc(main)}. Type \\? for help.</div>`; return
+        setRC(`<div class="error-msg">Unknown command: ${esc(main)}. Type \\? for help.</div>`); return
     }
 
     const result = await pgQuery(cmd)
     const tbl = rowsToTable(result)
     if (tbl.columns.length > 0) {
-        container.innerHTML = ''
+        setRC()
         renderTable(container, `psql output (${tbl.row_count} rows)`, tbl.columns, tbl.rows)
     } else {
-        container.innerHTML = `<div class="execute-ok">Command executed</div>`
+        setRC(`<div class="execute-ok">Command executed</div>`)
     }
 }
 
@@ -992,9 +1000,9 @@ async function tryPsqlQuery(sql) {
 async function psqlTable(container, sql, label) {
     const r = await tryPsqlQuery(sql)
     if (!r || !r.columns.length) {
-        container.innerHTML = `<div class="execute-ok">No results</div>`; return
+        setRC(`<div class="execute-ok">No results</div>`); return
     }
-    container.innerHTML = ''
+    setRC()
     renderTable(container, `${esc(label)} (${r.row_count} rows)`, r.columns, r.rows)
 }
 
@@ -1046,14 +1054,14 @@ function duplicateLine(cm) {
 window.resetDB = async function() {
     if (!confirm('This will drop all tables in pgKata. All data will be lost. Continue?')) return
     $('results-section').style.display = 'block'
-    $('results-content').innerHTML = '<div class="execute-ok">Resetting database...</div>'
+    setRC('<div class="execute-ok">Resetting database...</div>')
     try {
         await ensureDB()
         await pg.exec('DROP SCHEMA public CASCADE; CREATE SCHEMA public')
-        $('results-content').innerHTML = '<div class="execute-ok">Database recreated successfully</div>'
+        setRC('<div class="execute-ok">Database recreated successfully</div>')
         loadSchema()
     } catch(e) {
-        $('results-content').innerHTML = `<div class="error-msg">${esc(e.message)}</div>`
+        setRC(`<div class="error-msg">${esc(e.message)}</div>`)
     }
 }
 

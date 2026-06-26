@@ -11,20 +11,29 @@
 </head>
 <body>
 <div class="app-header">
-    <h1>pgKata</h1>
-    <div class="progress-bar-container">
-        <span id="progress-label">loading...</span>
-        <div class="progress-track">
-            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    <div class="header-left">
+        <h1>pgKata</h1>
+        <div class="mode-toggle" role="tablist">
+            <button class="mode-btn active" data-mode="challenge" role="tab" aria-selected="true" onclick="window.switchMode('challenge')">Challenges</button>
+            <button class="mode-btn" data-mode="sandbox" role="tab" aria-selected="false" onclick="window.switchMode('sandbox')">Sandbox</button>
         </div>
     </div>
-    <div id="db-status" class="db-status db-loading">starting PG…</div>
+    <div class="header-right">
+        <div class="progress-bar-container">
+            <span id="progress-label">loading...</span>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+        </div>
+        <div id="db-status" class="db-status db-loading">starting PG…</div>
+    </div>
 </div>
 
 <div class="app-layout">
     <aside class="sidebar">
-        <div class="sidebar-header">Challenges</div>
+        <div class="sidebar-header" id="sidebar-header">Challenges</div>
         <div id="challenge-list"></div>
+        <div id="sandbox-content" style="display:none"></div>
     </aside>
 
     <main class="main-panel">
@@ -149,6 +158,9 @@ let autosaveTimer = null
 let splitDragging = false
 let psqlExpanded = false
 let schemaTables = {}
+let sandboxMode = false
+let sandboxScripts = []
+let currentScriptIdx = -1
 
 const PROGRESS_KEY = 'pgkata_progress'
 
@@ -320,7 +332,15 @@ function showSaveIndicator(type) {
 }
 
 function saveEditorContent() {
-    if (!editor || !currentFolder) return
+    if (!editor) return
+    if (sandboxMode) {
+        if (currentScriptIdx >= 0 && sandboxScripts[currentScriptIdx]) {
+            sandboxScripts[currentScriptIdx].content = editor.getValue()
+            try { localStorage.setItem('pgkata_sandbox', JSON.stringify({scripts:sandboxScripts, currentScript:currentScriptIdx})) } catch(e) {}
+        }
+        return
+    }
+    if (!currentFolder) return
     try { localStorage.setItem('sql_editor_' + currentFolder, editor.getValue()) } catch(e) {}
 }
 function loadEditorContent(folder) {
@@ -437,7 +457,38 @@ async function selectChallenge(folder) {
     await loadFolder(folder, prev)
 }
 
+function ensureEditor() {
+    if (editor) return
+    const ta = $('editor'); ta.style.display = 'none'
+    const p = loadIndentPref()
+    editor = CodeMirror.fromTextArea(ta, {
+        mode:'text/x-pgsql', theme:'monokai', lineNumbers:true,
+        indentWithTabs:p.mode==='tabs', tabSize:4, smartIndent:true, lineWrapping:true, autoCloseBrackets:true,
+        indentUnit:p.mode==='tabs'?p.size*4:p.size,
+        extraKeys:{
+            'Ctrl-Enter':()=>window.runSQL(), 'Cmd-Enter':()=>window.runSQL(),
+            'Ctrl-S':()=>{saveEditorContent();showSaveIndicator('manual')},
+            'Cmd-S':()=>{saveEditorContent();showSaveIndicator('manual')},
+            'Shift-Alt-Down':cm=>duplicateLine(cm),
+            'Cmd-Shift-D':cm=>duplicateLine(cm),
+            Enter(cm) {
+                const c=cm.getCursor(),l=cm.getLine(c.line),ch=c.ch
+                if(ch>0&&ch<l.length){const b=l[ch-1],a=l[ch]
+                if((b=='{'&&a=='}')||(b=='('&&a==')')){
+                const i=/^\s*/.exec(l)[0],u=cm.getOption('indentUnit'),t=cm.getOption('indentWithTabs')?'\t':' ',n=i+t.repeat(u>0?1:u)
+                cm.replaceRange('\n'+n+'\n'+i,c);cm.setCursor(c.line+1,n.length);return}}
+                return CodeMirror.Pass
+            }
+        },
+        hintOptions:{completeSingle:false}
+    })
+    editor.on('inputRead',(cm,c)=>{if(c.text.length===1&&/\w/.test(c.text[0])&&!cm.state.completionActive)cm.showHint({hint:CodeMirror.hint.sql,tables:schemaTables,completeSingle:false})})
+    editor.on('changes',()=>startAutosave())
+    updateIndentSelector(p)
+}
+
 async function loadFolder(folder, prev) {
+    ensureEditor()
     const meta = challengeMeta[folder] || {}
     const label = folder
     $('file-label').textContent = label
@@ -445,56 +496,6 @@ async function loadFolder(folder, prev) {
     $('challenge-desc').textContent = desc
     $('challenge-desc').style.display = desc ? 'block' : 'none'
     $('empty-state').style.display = 'none'
-    const ta = $('editor')
-    if (!editor) {
-        ta.style.display = 'none'
-        const savedIndent = loadIndentPref()
-        editor = CodeMirror.fromTextArea(ta, {
-            mode: 'text/x-pgsql',
-            theme: 'monokai',
-            lineNumbers: true,
-            indentWithTabs: savedIndent.mode === 'tabs',
-            indentUnit: savedIndent.mode === 'tabs' ? savedIndent.size * 4 : savedIndent.size,
-            tabSize: 4,
-            smartIndent: true,
-            lineWrapping: true,
-            autoCloseBrackets: true,
-            extraKeys: {
-                'Ctrl-Enter': () => window.runSQL(),
-                'Cmd-Enter': () => window.runSQL(),
-                'Ctrl-S': () => { saveEditorContent(); showSaveIndicator('manual') },
-                'Cmd-S': () => { saveEditorContent(); showSaveIndicator('manual') },
-                'Shift-Alt-Down': function(cm) { duplicateLine(cm) },
-                'Cmd-Shift-D': function(cm) { duplicateLine(cm) },
-                'Enter': function(cm) {
-                    const cur = cm.getCursor()
-                    const line = cm.getLine(cur.line)
-                    const ch = cur.ch
-                    if (ch > 0 && ch < line.length) {
-                        const before = line[ch - 1], after = line[ch]
-                        if ((before === '{' && after === '}') || (before === '(' && after === ')')) {
-                            const indent = /^\s*/.exec(line)[0]
-                            const unit = cm.getOption('indentUnit')
-                            const tab = cm.getOption('indentWithTabs') ? '\t' : ' '
-                            const inner = indent + tab.repeat(unit > 0 ? 1 : unit)
-                            cm.replaceRange('\n' + inner + '\n' + indent, cur)
-                            cm.setCursor(cur.line + 1, inner.length)
-                            return
-                        }
-                    }
-                    return cm.execCommand('newlineAndIndent')
-                },
-            },
-            hintOptions: { completeSingle: false },
-        })
-        editor.on('inputRead', function(cm, change) {
-            if (change.text.length === 1 && /\w/.test(change.text[0]) && !cm.state.completionActive) {
-                cm.showHint({ hint: CodeMirror.hint.sql, tables: schemaTables, completeSingle: false })
-            }
-        })
-        editor.on('changes', function() { startAutosave() })
-        updateIndentSelector(loadIndentPref())
-    }
     const saved = loadEditorContent(folder)
     editor.setValue(saved || '-- Write your SQL here\n')
     if (!saved) { setTimeout(() => editor.execCommand('selectAll'), 50) }
@@ -514,6 +515,13 @@ const storedVersion = localStorage.getItem('pgkata_snap_version')
 if (storedVersion !== SNAP_VERSION) {
     Object.keys(localStorage).filter(k => k.startsWith(SNAP_PREFIX)).forEach(k => localStorage.removeItem(k))
     localStorage.setItem('pgkata_snap_version', SNAP_VERSION)
+}
+
+// ponytail: sandbox snap version, bump to invalidate old sandbox snapshots
+const SANDBOX_SNAP_VER = 'pgkata_sandbox_snap_v2'
+if (localStorage.getItem('pgkata_sandbox_snap_ver') !== SANDBOX_SNAP_VER) {
+    localStorage.removeItem(SNAP_PREFIX + '__sandbox__')
+    localStorage.setItem('pgkata_sandbox_snap_ver', SANDBOX_SNAP_VER)
 }
 
 async function switchChallenge(folder, prev) {
@@ -574,7 +582,16 @@ async function saveSnapshot(folder) {
             }
         }
 
-        localStorage.setItem(SNAP_PREFIX + folder, typeLines.join('\n') + '\n' + seqLines.join('\n') + '\n' + tableLines.join('\n'))
+        // ponytail: capture PK/FK/UNIQUE constraints via pg_get_constraintdef
+        const conLines = []
+        try {
+            const cons = await pgQuery(`SELECT con.conname, cls.relname AS t, pg_catalog.pg_get_constraintdef(con.oid) AS def FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid=cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace=n.oid WHERE n.nspname='public' AND con.contype IN ('p','u','f') ORDER BY cls.relname, con.conname`)
+            for (const r of cons.rows) {
+                conLines.push(`ALTER TABLE "${r.t}" ADD CONSTRAINT "${r.conname}" ${r.def};`)
+            }
+        } catch(e) {}
+
+        localStorage.setItem(SNAP_PREFIX + folder, typeLines.join('\n') + '\n' + seqLines.join('\n') + '\n' + tableLines.join('\n') + '\n' + conLines.join('\n'))
     } catch(e) {}
 }
 
@@ -655,6 +672,172 @@ window.checkSchema = function() {
     return schemaTables
 }
 
+// ── Sandbox mode ─────────────────────────────────────
+
+// ponytail: single persistent sandbox, one script at a time, no rename. Lucide icons ISC licensed.
+const PK_ICON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="primary key"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>'
+const FK_ICON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="foreign key"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+const TBL_ICON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="table"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>'
+
+function updateModeUI() {
+    document.querySelectorAll('.mode-btn').forEach(b => {
+        const active = b.dataset.mode === (sandboxMode ? 'sandbox' : 'challenge')
+        b.classList.toggle('active', active)
+        b.setAttribute('aria-selected', active)
+    })
+    $('sidebar-header').textContent = sandboxMode ? 'Sandbox' : 'Challenges'
+    $('challenge-list').style.display = sandboxMode ? 'none' : ''
+    $('sandbox-content').style.display = sandboxMode ? '' : 'none'
+    const progress = document.querySelector('.progress-bar-container')
+    if (progress) progress.style.display = sandboxMode ? 'none' : ''
+    ;['verify-btn','hint-btn','restore-btn','reset-btn'].forEach(id => {
+        const el = $(id)
+        if (el) el.style.display = sandboxMode ? 'none' : ''
+    })
+}
+
+window.switchMode = async function(m) {
+    if ((m === 'sandbox') === sandboxMode) return
+    saveEditorContent()
+    stopAutosave()
+    if (sandboxMode) {
+        try { localStorage.setItem('pgkata_sandbox', JSON.stringify({scripts:sandboxScripts, currentScript:currentScriptIdx})) } catch(e) {}
+        await saveSnapshot('__sandbox__')
+    } else {
+        if (currentFolder) await saveSnapshot(currentFolder)
+    }
+    sandboxMode = m === 'sandbox'
+    try { localStorage.setItem('pgkata_mode', sandboxMode ? 'sandbox' : 'challenge') } catch(e) {}
+    updateModeUI()
+    if (sandboxMode) {
+        await enterSandbox()
+    } else {
+        currentFolder = null
+        const saved = localStorage.getItem('pgkata_current')
+        if (saved) selectChallenge(saved)
+        else { $('file-label').textContent = 'Select a challenge from the sidebar'; $('empty-state').style.display = ''; $('challenge-desc').style.display = 'none' }
+    }
+}
+
+async function enterSandbox() {
+    currentFolder = null
+    try {
+        const d = JSON.parse(localStorage.getItem('pgkata_sandbox'))
+        if (d && d.scripts && d.scripts.length) {
+            sandboxScripts = d.scripts; currentScriptIdx = d.currentScript || 0
+        } else { throw 'new' }
+    } catch(e) {
+        sandboxScripts = [{name:'main.sql', content:''}]; currentScriptIdx = 0
+        try { localStorage.setItem('pgkata_sandbox', JSON.stringify({scripts:sandboxScripts, currentScript:0})) } catch(e) {}
+    }
+    ensureEditor()
+    $('run-btn').disabled = false
+    const restored = await restoreSnapshot('__sandbox__')
+    if (!restored) { await pgExec('DROP SCHEMA public CASCADE; CREATE SCHEMA public'); await saveSnapshot('__sandbox__') }
+    // ponytail: load script directly, selectScript's saveEditorContent would overwrite with challenge SQL
+    const s = sandboxScripts[currentScriptIdx]
+    if (s) {
+        $('file-label').textContent = 'sandbox / ' + s.name
+        $('challenge-desc').style.display = 'none'
+        $('empty-state').style.display = 'none'
+        editor.setValue(s.content || '')
+        editor.refresh()
+        startAutosave()
+    }
+    loadSchema()
+    renderSandboxSidebar()
+    loadSchemaBrowser()
+}
+
+window.selectScript = function(i) {
+    saveEditorContent()
+    currentScriptIdx = i
+    const s = sandboxScripts[i]
+    if (!s) return
+    $('file-label').textContent = 'sandbox / ' + s.name
+    $('challenge-desc').style.display = 'none'
+    $('empty-state').style.display = 'none'
+    editor.setValue(s.content || '')
+    editor.refresh()
+    startAutosave()
+    document.querySelectorAll('.script-item').forEach(el => el.classList.toggle('active', parseInt(el.dataset.idx) === i))
+}
+
+window.addScript = function() {
+    const name = prompt('Script name:', 'query_' + sandboxScripts.length + '.sql')
+    if (!name) return
+    sandboxScripts.push({name, content:''})
+    window.selectScript(sandboxScripts.length - 1)
+    renderScriptList()
+}
+
+window.deleteScript = function(i) {
+    if (!confirm('Delete "'+sandboxScripts[i].name+'"?')) return
+    sandboxScripts.splice(i, 1)
+    if (!sandboxScripts.length) sandboxScripts.push({name:'main.sql', content:''})
+    if (currentScriptIdx >= sandboxScripts.length) currentScriptIdx = sandboxScripts.length - 1
+    window.selectScript(currentScriptIdx)
+    renderScriptList()
+}
+
+function renderSandboxSidebar() {
+    const sb = $('sandbox-content')
+    sb.innerHTML = '<div class="sandbox-section"><div class="sandbox-section-header"><span>Scripts</span><button class="btn btn-xs" onclick="window.addScript()">+ New</button></div><div id="script-list"></div></div><div class="sandbox-section"><div class="sandbox-section-header"><span>Schema</span></div><div id="schema-tree"><div class="schema-empty">Loading...</div></div></div>'
+    renderScriptList()
+    loadSchemaBrowser()
+}
+
+function renderScriptList() {
+    const list = $('script-list')
+    if (!list) return
+    list.innerHTML = sandboxScripts.map((s,i) =>
+        '<div class="script-item'+(i===currentScriptIdx?' active':'')+'" data-idx="'+i+'" onclick="window.selectScript('+i+')">'+
+        '<span class="script-name">'+esc(s.name)+'</span>'+
+        '<span class="script-close" onclick="event.stopPropagation();window.deleteScript('+i+')">&times;</span></div>'
+    ).join('')
+}
+
+async function loadSchemaBrowser() {
+    const tree = $('schema-tree')
+    if (!tree) return
+    // ponytail: remember toggled tables for this render cycle
+    const expanded = new Set([...tree.querySelectorAll('.schema-table.expanded')].map(el => el.dataset.table))
+    try {
+        const tr = await pgQuery("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY table_name")
+        if (!tr.rows.length) { tree.innerHTML = '<div class="schema-empty">No tables yet</div>'; return }
+        const [cr, conr] = await Promise.all([
+            pgQuery("SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name, ordinal_position"),
+            // ponytail: LEFT JOIN matches runPsql pattern proven to work in PGlite
+            pgQuery("SELECT con.conname, cls.relname AS table_name, a.attname AS column_name, con.contype FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class cls ON con.conrelid=cls.oid JOIN pg_catalog.pg_namespace n ON cls.relnamespace=n.oid LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=cls.oid AND a.attnum=ANY(con.conkey) WHERE n.nspname='public' AND con.contype IN ('p','f') ORDER BY cls.relname, con.conname, a.attnum").catch(()=>({rows:[]}))
+        ])
+        const pk={}, fk={}
+        if (conr.rows) conr.rows.forEach(r => {
+            if (r.contype === 'p') pk[r.table_name+'|'+r.column_name]=true
+            else if (r.contype === 'f') fk[r.table_name+'|'+r.column_name]=true
+        })
+        const cols={}
+        if (cr.rows) cr.rows.forEach(r => {if(!cols[r.table_name])cols[r.table_name]=[];cols[r.table_name].push(r)})
+        let html = ''
+        for (const t of tr.rows) {
+            const cs = cols[t.table_name] || []
+            const ex = expanded.has(t.table_name) ? ' expanded' : ''
+            html += '<div class="schema-table'+ex+'" data-table="'+esc(t.table_name)+'" onclick="this.classList.toggle(\'expanded\')" tabindex="0" role="button" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){this.click();event.preventDefault()}">'
+            html += '<span class="schema-expand">&#9654;</span>'+TBL_ICON+'<span>'+esc(t.table_name)+'</span>'
+            html += '</div><div class="schema-columns">'
+            for (const c of cs) {
+                const k = t.table_name+'|'+c.column_name
+                html += '<div class="schema-column">'
+                if (pk[k]) html += '<span class="schema-col-icon icon-pk">'+PK_ICON+'</span>'
+                else if (fk[k]) html += '<span class="schema-col-icon icon-fk">'+FK_ICON+'</span>'
+                else html += '<span class="schema-col-icon"></span>'
+                html += '<span class="schema-col-name">'+esc(c.column_name)+'</span><span class="schema-col-type">'+esc(c.data_type)+'</span></div>'
+            }
+            html += '</div>'
+        }
+        tree.innerHTML = html
+    } catch(e) { console.error('schema browser:', e); tree.innerHTML = '<div class="schema-empty">Error loading schema</div>' }
+}
+
 // ── Run SQL ─────────────────────────────────────────
 
 window.runSQL = async function() {
@@ -713,9 +896,10 @@ window.runSQL = async function() {
         }
     })
 
-    if (!hasError && folder) {
+    if (!hasError) {
         loadSchema()
-        await saveSnapshot(folder)
+        if (sandboxMode) { loadSchemaBrowser(); await saveSnapshot('__sandbox__') }
+        else if (folder) await saveSnapshot(folder)
     }
 }
 
@@ -1175,8 +1359,14 @@ function esc(text) {
 
 ;(async () => {
     await loadChallenges()
-    const saved = localStorage.getItem('pgkata_current')
-    if (saved) selectChallenge(saved)
+    sandboxMode = localStorage.getItem('pgkata_mode') === 'sandbox'
+    updateModeUI()
+    if (sandboxMode) {
+        await enterSandbox()
+    } else {
+        const saved = localStorage.getItem('pgkata_current')
+        if (saved) selectChallenge(saved)
+    }
 })()
 </script>
 </body>

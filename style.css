@@ -1203,8 +1203,8 @@ li.CodeMirror-hint-active {
 
 .schema-graph-card {
     position: absolute;
-    width: 220px;
-    min-width: 220px;
+    width: 300px;
+    min-width: 300px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -1282,8 +1282,6 @@ li.CodeMirror-hint-active {
 
 .schema-graph-col-name {
     color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
 }
 

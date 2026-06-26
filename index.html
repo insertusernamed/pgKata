@@ -162,6 +162,19 @@ let autosaveTimer = null
 let splitDragging = false
 let psqlExpanded = false
 let schemaTables = {}
+function fmtVal(v) {
+    if (v == null) return 'null'
+    if (v instanceof Date) return v.toISOString().split('T')[0]
+    return String(v)
+}
+
+const pgKeywords = [
+    'date_trunc', 'regexp_replace', 'to_char', 'concat', 'round',
+    'string_agg', 'array_length', 'jsonb_agg', 'json_agg',
+    'jsonb_build_object', 'json_build_object', 'jsonb_set',
+    'to_tsvector', 'plainto_tsquery', 'ts_rank', 'ts_headline',
+    'crypt', 'gen_salt', 'current_database'
+]
 let sandboxMode = false
 let sandboxScripts = []
 let currentScriptIdx = -1
@@ -195,7 +208,7 @@ function rowsToTable(result) {
         return { columns: keys, rows: [], row_count: 0 }
     }
     const columns = Object.keys(result.rows[0])
-    const rows = result.rows.map(row => columns.map(c => String(row[c] ?? '')))
+    const rows = result.rows.map(row => columns.map(c => fmtVal(row[c])))
     return { columns, rows, row_count: rows.length }
 }
 
@@ -481,6 +494,7 @@ function ensureEditor() {
             'Ctrl-Enter':()=>window.runSQL(), 'Cmd-Enter':()=>window.runSQL(),
             'Ctrl-S':()=>{saveEditorContent();showSaveIndicator('manual')},
             'Cmd-S':()=>{saveEditorContent();showSaveIndicator('manual')},
+            'Alt-Up':cm=>moveLine(cm,-1), 'Alt-Down':cm=>moveLine(cm,1),
             'Shift-Alt-Down':cm=>duplicateLine(cm),
             'Cmd-Shift-D':cm=>duplicateLine(cm),
             Enter(cm) {
@@ -494,7 +508,7 @@ function ensureEditor() {
         },
         hintOptions:{completeSingle:false}
     })
-    editor.on('inputRead',(cm,c)=>{if(c.text.length===1&&/\w/.test(c.text[0])&&!cm.state.completionActive)cm.showHint({hint:CodeMirror.hint.sql,tables:schemaTables,completeSingle:false})})
+    editor.on('inputRead',(cm,c)=>{if(c.text.length===1&&/\w/.test(c.text[0])&&!cm.state.completionActive)cm.showHint({hint:CodeMirror.hint.sql,tables:schemaTables,completeSingle:false,keywords:pgKeywords})})
     editor.on('changes',()=>startAutosave())
     updateIndentSelector(p)
 }
@@ -544,6 +558,8 @@ async function switchChallenge(folder, prev) {
         saveSnapshot(folder)
     }
     await loadSchema()
+    const schemaTab = document.querySelector('.results-tab[data-tab="schema"]')
+    if (schemaTab && schemaTab.classList.contains('active')) renderSchemaGraph()
 }
 
 async function saveSnapshot(folder) {
@@ -824,7 +840,9 @@ async function enterSandbox() {
         editor.refresh()
         startAutosave()
     }
-    loadSchema()
+        loadSchema()
+        const schemaTab = document.querySelector('.results-tab[data-tab="schema"]')
+        if (schemaTab && schemaTab.classList.contains('active')) renderSchemaGraph()
     renderSandboxSidebar()
     loadSchemaBrowser()
 }
@@ -1071,7 +1089,7 @@ async function verifyChallenge(challengeId, userSql) {
             }
         }
         const result = await db.query(userSql)
-        const actualRows = result.rows.map(r => Object.values(r).map(v => String(v ?? '')))
+        const actualRows = result.rows.map(r => Object.values(r).map(v => fmtVal(v)))
         const actualCols = result.rows.length > 0 ? Object.keys(result.rows[0]) : []
         return compareResultSets(actualRows, actualCols, expected)
     }
@@ -1091,7 +1109,7 @@ async function verifyChallenge(challengeId, userSql) {
     for (let i = 0; i < checks.length; i++) {
         const chk = checks[i]
         const cr = await db.query(chk.query)
-        const actual = cr.rows.map(r => Object.values(r).map(v => String(v ?? '')))
+        const actual = cr.rows.map(r => Object.values(r).map(v => fmtVal(v)))
         const exp = chk.expected.map(r => r.map(v => String(v)))
         const a = JSON.stringify(actual), e = JSON.stringify(exp)
         if (a !== e) {
@@ -1377,7 +1395,7 @@ async function renderSchemaGraph() {
             })
         })
 
-        const CARD_W = 220, GAP_X = 60, GAP_Y = 50, PAD = 40
+        const CARD_W = 300, GAP_X = 60, GAP_Y = 50, PAD = 40
         const tableList = tables.rows.map(t => ({
             name: t.table_name, columns: colMap[t.table_name] || [],
             h: 30 + (colMap[t.table_name] || []).length * 24
@@ -1553,6 +1571,25 @@ function duplicateLine(cm) {
     const cursor = cm.getCursor(), line = cm.getLine(cursor.line)
     cm.replaceRange('\n' + line, { line: cursor.line, ch: line.length })
     cm.setCursor(cursor.line + 1, cursor.ch)
+}
+
+function moveLine(cm, dir) {
+    if (!cm) return
+    const total = cm.lineCount(), cursor = cm.getCursor()
+    const from = cm.getCursor('from'), to = cm.getCursor('to')
+    const a = from.line, b = to.line
+    if (dir === -1 && a === 0) return
+    if (dir === 1 && b >= total - 1) return
+    const range = {line: a, ch: 0}, end = {line: b + 1, ch: 0}
+    const text = cm.getRange(range, end)
+    cm.replaceRange('', range, end)
+    const ins = dir === -1 ? a - 1 : a + 1
+    cm.replaceRange(text, {line: ins, ch: 0})
+    const na = dir === -1 ? a - 1 : a + 1, nb = dir === -1 ? b - 1 : b + 1
+    cm.setSelection({line: na, ch: 0}, {line: nb + 1, ch: 0})
+    for (let i = na; i <= nb; i++) cm.indentLine(i, 'smart')
+    cm.setCursor(na + (cursor.line - a), cursor.ch)
+    setTimeout(() => cm.refresh(), 0)
 }
 
 // ── Reset / Checkpoint ──────────────────────────────
